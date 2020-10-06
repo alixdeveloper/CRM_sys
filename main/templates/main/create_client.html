@@ -1,0 +1,43 @@
+{% extends 'main/base.html' %}
+{% block content %}
+
+<nav class="navbar navbar-light bg-light">
+  <a class="navbar-brand" href="#">
+    Новый клиент
+  </a>
+</nav>
+<div class="container">
+<form action="create_client" method="post">
+    {% csrf_token %}
+Фамилия
+    <input class="form-control" name="last_name" type="text" placeholder="Текст">
+Имя
+    <input class="form-control" name="first_name" type="text" placeholder="Текст">
+Отчество
+    <input class="form-control" name="middle_name" type="text" placeholder="Текст">
+Номер телефона
+    <input class="form-control" name="phone" type="number" placeholder="7 918 000 00 00">
+Удобный способ связи
+    <select class="form-control" name="communication_type" data-live-search="true">
+          <option selected value="">Любой</option>
+      <option value="Телефон">Телефон</option>
+      <option value="Instagram">Instagram</option>
+      <option value="VK">VK</option>
+      <option value="Telegram">Telegram</option>
+      <option value="Facebook">Facebook</option>
+      <option value="WhatsApp">WhatsApp</option>
+      <option value="Email">Email</option>
+      <option value="Viber">Viber</option>
+      <option value="Личная встреча">Личная встреча</option>
+      <option value=SMS">SMS</option>
+    </select>
+Город
+    <input class="form-control" name="city" type="text" placeholder="Текст"><br>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+</form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+{% endblock %}

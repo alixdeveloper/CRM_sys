@@ -1,0 +1,638 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+{% load parse_iso %}
+{% load parse_iso_order %}
+{% load static %}
+{% load to_int %}
+{% load get_orders_of_product %}
+{% load get_clients_of_order %}
+{% load check_order %}
+{% load check_client %}
+{% load tz %}
+
+<style>
+
+    th, td{
+        border: none!important
+    }
+    .scrollbar {
+margin-left: 30px;
+float: left;
+height: 300px;
+width: 65px;
+background: black;
+overflow-y: scroll;
+margin-bottom: 25px;
+}
+.force-overflow {
+min-height: 450px;
+}
+table{
+    margin-bottom: 0!important;
+}
+.scrollbar-primary::-webkit-scrollbar {
+width: 12px;
+background-color: var(--bg-color); }
+
+.scrollbar-primary::-webkit-scrollbar-thumb {
+border-radius: 10px;
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #4285F4; }
+
+.scrollbar-primary {
+scrollbar-color: #4285F4 #F5F5F5;
+}
+
+.scrollbar-danger::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #F5F5F5;
+border-radius: 10px; }
+
+.scrollbar-danger::-webkit-scrollbar {
+width: 12px;
+background-color: #F5F5F5; }
+
+.scrollbar-danger::-webkit-scrollbar-thumb {
+border-radius: 10px;
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #ff3547; }
+
+.scrollbar-danger {
+scrollbar-color: #ff3547 #F5F5F5;
+}
+
+.scrollbar-warning::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #F5F5F5;
+border-radius: 10px; }
+
+.scrollbar-warning::-webkit-scrollbar {
+width: 12px;
+background-color: #F5F5F5; }
+
+.scrollbar-warning::-webkit-scrollbar-thumb {
+border-radius: 10px;
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #FF8800; }
+
+.scrollbar-warning {
+scrollbar-color: #FF8800 #F5F5F5;
+}
+
+.scrollbar-success::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #F5F5F5;
+border-radius: 10px; }
+
+.scrollbar-success::-webkit-scrollbar {
+width: 12px;
+background-color: #F5F5F5; }
+
+.scrollbar-success::-webkit-scrollbar-thumb {
+border-radius: 10px;
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #00C851; }
+
+.scrollbar-success {
+scrollbar-color: #00C851 #F5F5F5;
+}
+
+.scrollbar-info::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #F5F5F5;
+border-radius: 10px; }
+
+.scrollbar-info::-webkit-scrollbar {
+width: 12px;
+background-color: #F5F5F5; }
+
+.scrollbar-info::-webkit-scrollbar-thumb {
+border-radius: 10px;
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #33b5e5; }
+
+.scrollbar-info {
+scrollbar-color: #33b5e5 #F5F5F5;
+}
+
+.scrollbar-default::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #F5F5F5;
+border-radius: 10px; }
+
+.scrollbar-default::-webkit-scrollbar {
+width: 12px;
+background-color: #F5F5F5; }
+
+.scrollbar-default::-webkit-scrollbar-thumb {
+border-radius: 10px;
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #2BBBAD; }
+
+.scrollbar-default {
+scrollbar-color: #2BBBAD #F5F5F5;
+}
+
+.scrollbar-secondary::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #F5F5F5;
+border-radius: 10px; }
+
+.scrollbar-secondary::-webkit-scrollbar {
+width: 12px;
+background-color: #F5F5F5; }
+
+.scrollbar-secondary::-webkit-scrollbar-thumb {
+border-radius: 10px;
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #aa66cc; }
+
+.scrollbar-secondary {
+scrollbar-color: #aa66cc #F5F5F5;
+}
+</style>
+<nav class="navbar navbar-light bg-light">
+    <a class="navbar-brand" href="#">
+        <h1>Заказ {{ order.id }}</h1>
+    </a>
+</nav>
+
+
+<div class="container">
+
+    <form action="/order/{{ order.id }}/" method="post">
+        {% csrf_token %}
+        <div class="card card-body" style="margin-top: 10px;">
+
+            Название заказа
+            <input class="form-control" name="name" type="text" placeholder="Текстом" value="{{ order.name }}" disabled>
+            Дата приема заказа
+            <input class="form-control date" name="create_date" type="date" value="{{ order.create_date|timezone:'Europe/Moscow'|parse_iso }}"
+                   disabled>
+            Дата завершения
+            <input class="form-control date" name="complete_date" type="date"
+                   value="{{ order.complete_date|timezone:'Europe/Moscow'|parse_iso }}" disabled><br>
+            Примерный вес
+            <input class="form-control" name="weight" type="number" placeholder="Числом" value="{{ order.weight }}"
+                   disabled><br>
+            Примерная стоимость
+            <input class="form-control" name="price" type="number" placeholder="Числом" value="{{ order.price }}"
+                   disabled>
+            Предоплата
+            <input class="form-control" name="prepayment" type="number" placeholder="Числом"
+                   value="{{ order.prepayment }}" disabled><br>
+            {% if order.preorder_weight %}
+            Предоплата металлом
+            <table>
+                <tr>
+                    <td><input class="form-control" name="prepayment" id="preorder_weight" type="number"
+                               placeholder="Числом" value="{{ order.preorder_weight }}" disabled></td>
+                    <td nowrap><span>вес</span></td>
+                </tr>
+                <tr>
+                    <td><input class="form-control" id="preorder_weight_result" step="0.01" type="number" disabled></td>
+                    <td>-10%</td>
+                </tr>
+            </table>
+
+            <script>
+                function truncated(num) {
+                    return Math.trunc(num * 100) / 100;
+                }
+
+                function calculate() {
+                    var weight = document.getElementById("preorder_weight");
+                    var preorder_weight_result = document.getElementById("preorder_weight_result");
+                    preorder_weight_result.value = truncated(parseFloat(weight.value) - parseFloat(weight.value) / 10);
+                }
+
+                calculate()
+            </script>
+            {% endif %}
+            Источник рекламы
+
+            <input class="form-control" name="ads" type="text" placeholder="Как узнал" value="{{ order.ads }}" disabled><br>
+        </div>
+{% if order|check_order%}
+        <!--Начало блока изделия-->
+        <br><h2>Изделия</h2>
+        {% for product in products %}
+        {% if order in product|get_orders_of_product %}
+        <a data-toggle="collapse" href="#product{{product.id}}" role="button" aria-expanded="false"
+           aria-controls="collapseExample">
+            <h4>{{ product.name }}</h4>
+        </a>
+
+
+        <div class="collapse" id="product{{product.id}}">
+            <div class="card card-body">
+
+                <div class="container">
+<!--                    <form action="create_product" method="post" enctype="multipart/form-data">-->
+                        {% csrf_token %}
+                        Название
+                        <input class="form-control" name="name" type="text" value="{{ product.name }}"
+                               placeholder="Текст" disabled>
+                        Материал
+                        <input class="form-control" name="material" type="text" value="{{ product.material }}"
+                               placeholder="Текст" disabled>
+                        Цвет
+                        <input class="form-control" name="color" type="text" value="{{ product.color }}"
+                               placeholder="Текст" disabled>
+                        Примерный вес
+                        <input class="form-control" name="weight" type="number" value="{{ product.weight }}" step="0.01"
+                               placeholder="Число" disabled>
+                        Длина
+                        <input class="form-control" name="length" type="number" value="{{ product.length }}" step="0.01"
+                               placeholder="Число" disabled>
+                        Ширина
+                        <input class="form-control" name="width" type="number" value="{{ product.width }}" step="0.01"
+                               placeholder="Число" disabled>
+                        Высота
+                        <input class="form-control" name="height" type="number" value="{{ product.height }}" step="0.01"
+                               placeholder="Число" disabled>
+                        Размер
+                        <input class="form-control" name="size" type="number" value="{{ product.size }}"
+                               placeholder="Число" disabled>
+                    {% if product.photo%}
+                    <br>
+                        <img style="border-radius: 3px" src="{% static 'uploads/image/'%}{{ product.photo }}"
+                             class="img-fluid" alt="Responsive image">
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+                        <br>
+        <!--Конец блока изделия-->
+{% if order|check_client %}
+        <!--Начало блока клиента-->
+        <br><h2>Клиенты</h2>
+        {% for client in order|get_clients_of_order %}
+        <a data-toggle="collapse" href="#client{{client.id}}" role="button" aria-expanded="false"
+           aria-controls="collapseExample">
+            <h4>{% if client.first_name %}{{client.first_name}}{% elif client.last_name %}{{client.last_name}}{%elif client.middle_name %}{{client.middle_name}}{% else %}Ошибка! Нет имени!{% endif %}</h4>
+        </a>
+
+
+        <div class="collapse" id="client{{client.id}}">
+            <div class="card card-body">
+
+                <div class="container">
+Фамилия
+    <input class="form-control" name="last_name" type="text" value="{{ client.last_name }}" placeholder="Текст" disabled>
+Имя
+    <input class="form-control" name="first_name" type="text" value="{{ client.first_name}}" placeholder="Текст" disabled>
+Отчество
+    <input class="form-control" name="middle_name" type="text" value="{{ client.middle_name}}" placeholder="Текст" disabled>
+Номер телефона
+    <input class="form-control" name="phone" type="number" value="{{ client.phone }}" placeholder="7 918 000 00 00" disabled>
+Удобный способ связи
+    <select class="form-control" name="communication_type" disabled data-live-search="true">
+        {% if client.communication_type %}
+        <option value="{{ client.communication_type }}" selected>{{ client.communication_type }}</option>
+        <option>Любой</option>
+        {% else %}
+        <option selected>Любой</option>
+        {% endif %}
+      <option>Телефон</option>
+      <option>Instagram</option>
+      <option>VK</option>
+      <option>Telegram</option>
+      <option>Facebook</option>
+      <option>WhatsApp</option>
+      <option>Email</option>
+      <option>Viber</option>
+      <option>Личная встреча</option>
+      <option>SMS</option>
+    </select>
+
+Город
+    <input class="form-control" name="city" type="text" value="{{ client.city }}" placeholder="Текст" disabled><br>
+                    <br>
+                    </div>
+
+            </div>
+        </div>
+        {% endfor %}
+                        <br>
+        <!--Конец блока клиента-->
+{%endif%}
+
+        <h2>Комментарии</h2>
+
+
+    <div class="card card-body" style="margin-top: 10px;">
+
+        <div class="table-responsive table-scroll-vertical scrollbar-primary overflow-auto" id="table-scroll-vertical">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">Время</th>
+                    <th scope="col">Сообщение</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if comments %}
+                {% for message in comments %}
+                <tr>
+                    <th scope="row">{{ message.date|timezone:"Europe/Moscow"|parse_iso_order }}</th>
+                    <td style="word-wrap: break-word;">{{ message.message }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td></td>
+                    <td>Записей нет...</td>
+                </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+        Комментарий
+        <textarea class="form-control" name="comment" id="exampleFormControlTextarea1" rows="3"></textarea><br>
+        <button type="submit" class="btn btn-primary">Добавить комментарий</button>                    </form>
+    <br>
+<div class="btn-group-vertical">
+
+                  <a href="/create_product" name="create" value="create" class="btn btn-secondary">Добавить изделие</a></td></tr>
+                  <a href="/create_client" name="create" value="create" class="btn btn-secondary">Добавить клиента</a></td></tr>
+    </div>
+
+    <br>
+    <br>
+    <br>
+
+
+    <style>th, td{text-align: left; vertical-align: bottom!important;}
+            .list_table tr td, .list_table tr th{
+                vertical-align: middle!important;
+            }
+    </style>
+    <h2>Финансы</h2>
+            <div class="card card-body" >
+                <div class="table-responsive">
+                    <table class="table table-sm list_table">
+                        <tr><th>Расход</th><th>Моя цена</th><th>Наценка</th><th>Цена клиенту</th></tr>
+<!--                        <tr><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td></tr>-->
+
+                        {% for payment in payments %}
+                        <tr><td>{{payment.name}}</td><td>{{payment.my_price}}</td><td>{{ payment|to_int }}</td><td>{{ payment.client_price}}</td></tr>
+                        {% endfor %}
+
+                         <tr><td colspan="4"><div class="card card-body innercard">
+                            Доходы: <br>
+                            Расходы: <br>
+                            Итог по заказу: <br>
+                         </div></td></tr>
+                    </table>
+            </div>
+            </div>
+                <a data-toggle="collapse" href="#money" role="button" aria-expanded="false" aria-controls="collapseExample" style="margin-top:5px;" class="btn btn-primary checkbox" name="checkbox">Новый платеж</a><br>
+    <br>
+
+    <div class="collapse" id="money">
+        <form action="/create_payment" method="post" name="cash">
+            {% csrf_token %}
+        <div class="card card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+
+                        <tr><td colspan="3"><div class="btn-group btn-group-toggle" data-toggle="buttons">
+  <label class="btn btn-secondary active">
+    <input type="radio" name="options" onchange="my_function('-')" value="-" id="option1" checked>Расход</label>
+  <label class="btn btn-secondary">
+    <input type="radio" onchange="my_function('+')" name="options" value="+" id="option2">Доход</label>
+  <label class="btn btn-secondary">
+    <input type="radio" onchange="my_function('=')" name="options" value="=" id="option3">Моя работа</label>
+</div>
+<br></td></tr>
+
+                        <tr ><td colspan="3"><p id="title" style="display: inline">Описание</p><input required id="description" name="description" onkeyup="calculate_price0()" class="form-control"  type="text" placeholder="Комментарий расхода"></td></tr>
+                        <tr id="first"><td colspan="3"><p id="count" style="display: inline">Моя цена</p><input required id="my_price" name="my_price" min=0 step="any"  onkeyup="calculate_price0()" class="form-control"  type="number" placeholder="Сколько денег потрачено"></td></tr>
+
+                        <tr id="content_calc"><td >Наценка<input id="one" name="one" step="any" class="form-control calc" value="0" onkeyup="calculate_price1()" type="number" placeholder="Наценка"></td>
+                            <td>Наценка %<input   step="any" onkeyup="calculate_price2()" id="two" name="two" class="calc form-control" value="0"  type="number" placeholder="От моей цены"></td>
+                            <td>Цена клиента<input  name="three" value="0" onkeyup="calculate_price3()" required id="three" class="calc form-control" type="number" placeholder="Цена клиента"></td></tr>
+                        <tr><td colspan="3"> <input type="submit" class="btn btn-success" style="background-color: var(--primary-color)!important;width: 100%"></td></tr>
+                    </table>
+
+            </div>            </div>
+
+          </form>    </div>
+    </div>
+
+
+<script>
+
+    var my_price = document.getElementById('my_price');
+
+            document.querySelectorAll('.calc').forEach(item => { item.addEventListener('focus', event => {
+                if (my_price.value.length==0){
+                my_price.focus();}
+            })})
+
+
+
+
+
+    function my_function(val){
+    var count = document.getElementById('count');
+    var my_price = document.getElementById('my_price');
+    var content_calc = document.getElementById('content_calc');
+    var description = document.getElementById('description');
+    if (val==='+'){
+        count.innerText = 'Сумма дохода';
+        if (content_calc){
+
+        content_calc.remove();}
+        description.setAttribute('placeholder','Комментарий дохода');
+        my_price.setAttribute('placeholder','Сколько денег получено');
+    }
+    else if(val==='-'){
+        count.innerText = 'Моя цена';
+        my_price.setAttribute('placeholder','Сколько денег потрачено');
+        var newTr = document.createElement("tr");
+        description.setAttribute('placeholder','Комментарий расхода');
+
+        newTr.innerHTML = "<td >Наценка<input id=\"one\"  class=\"form-control calc\" value=\"0\" onkeyup=\"calculate_price1()\" type=\"number\" placeholder=\"Наценка\"></td>\n" +
+            "                            <td>Наценка %<input   onkeyup=\"calculate_price2()\" id=\"two\" class=\"form-control calc\" value=\"0\" type=\"number\" value=\"any\" placeholder=\"От моей цены\"></td>\n" +
+            "                            <td>Цена клиента<input value=\"0\" onkeyup=\"calculate_price3()\" id=\"three\" class=\"form-control calc\" type=\"number\" required placeholder=\"Цена клиента\"></td>";
+        newTr.id = 'content_calc';
+        var first = document.getElementById('first');
+        first.parentNode.insertBefore(newTr, first.nextElementSibling);
+        var my_price = document.getElementById('my_price');
+
+            document.querySelectorAll('.calc').forEach(item => { item.addEventListener('focus', event => {
+                if (my_price.value.length==0){
+                my_price.focus();}
+                })})
+
+    }
+    else if(val==='='){
+                count.innerText = 'Стоимость';
+        if (content_calc){
+        content_calc.remove();}
+        description.setAttribute('placeholder','Описание работы');
+        my_price.setAttribute('placeholder','Стоимость работы');
+
+    }
+ }
+</script>
+
+<br><br><br>
+<br><br><br>
+<br><br><br>
+    <script>
+        function truncated(num) {
+ return Math.trunc(num * 100) / 100;
+}
+        function calculate_price0() {
+            var three = document.getElementById("three");
+            var one = document.getElementById("one");
+            var two = document.getElementById("two");
+            var my_price = document.getElementById("my_price");
+            one.value = (parseFloat(my_price.value)/100)*parseFloat(two.value);
+            three.value = parseFloat(my_price.value)+parseFloat(one.value);
+
+        }
+        function calculate_price1() {
+            var one = document.getElementById("one");
+            var two = document.getElementById("two");
+            var three = document.getElementById("three");
+            var my_price = document.getElementById("my_price");
+            two.value = parseFloat(one.value)/(parseFloat(my_price.value)/100);
+            three.value = parseFloat(my_price.value)+parseFloat(one.value);
+            // one.value = (parseFloat(my_price.value)/100)*parseFloat(two.value);
+
+        }
+                    function calculate_price2() {
+            var one = document.getElementById("one");
+            var two = document.getElementById("two");
+            var three = document.getElementById("three");
+            var my_price = document.getElementById("my_price");
+            one.value = (parseFloat(my_price.value)/100)*parseFloat(two.value);
+            three.value = parseFloat(my_price.value)+parseFloat(one.value);
+            // two.value = parseFloat(one.value)/(parseFloat(my_price.value)/100);
+
+
+        }
+                    function calculate_price3() {
+            var one = document.getElementById("one");
+            var two = document.getElementById("two");
+            var three = document.getElementById("three");
+            var my_price = document.getElementById("my_price");
+            one.value = parseFloat(three.value)-parseFloat(my_price.value);
+            two.value = parseFloat(one.value)/(parseFloat(my_price.value)/100);
+
+        }
+
+    </script>
+
+    <!--<h3>Изделия</h3>-->
+    <!--<div class="table-responsive">-->
+    <!--<table class="table">-->
+    <!--  <thead>-->
+    <!--    <tr>-->
+    <!--      <th scope="col">Изделие</th>-->
+    <!--    </tr>-->
+    <!--  </thead>-->
+    <!--  <tbody>-->
+
+    <!--  </tbody>-->
+    <!--        <form action="/link_product_to_order" method="post" style="display: inline">-->
+    <!--        {% csrf_token %}-->
+
+    <!--      {% if products %}-->
+    <!--          <tr><td><select name="product" class="form-control" required>-->
+    <!--              <option value="" disabled selected hidden>Выбрать</option>-->
+    <!--                      {% for product in products %}-->
+
+    <!--            <option>{{ product.name }}</option>-->
+    <!--              {% endfor %}-->
+    <!--        </select></td></tr>-->
+    <!--          <tr><td><button type="submit" name="save" value="save" class="btn btn-success">Сохранить</button>-->
+    <!--              <input type="hidden" name="order" value="{{ order.id }}">-->
+
+    <!--              <a href="/create_product" name="create" value="create" class="btn btn-warning">Создать</a></td></tr>-->
+
+
+    <!--  {% else %}-->
+    <!--  <tr><td>Изделий нет...</td></tr>-->
+    <!--<tr><td>-->
+    <!--              <a href="/create_product" name="create" value="create" class="btn btn-warning">Создать</a></td></tr>-->
+
+    <!--  {% endif %}-->
+    <!--                </form>-->
+
+    <!--</table>-->
+    <!--</div>-->
+    <!--    <br>-->
+
+    <!--<h2>Клиенты</h2>-->
+    <!--<div class="table-responsive">-->
+    <!--<table class="table">-->
+    <!--  <thead>-->
+    <!--    <tr>-->
+    <!--      <th scope="col">Клиент</th>-->
+    <!--    </tr>-->
+    <!--  </thead>-->
+    <!--  <tbody>-->
+    <!--  {% if clients %}-->
+    <!--      <tr><td>-->
+    <!--          <select class="form-control" id="exampleFormControlSelect1">-->
+    <!--                            <option>Выбрать</option>-->
+
+    <!--                      {% for client in clients %}-->
+
+    <!--            <option>{{ client }}</option>-->
+    <!--              {% endfor %}-->
+    <!--        </select>-->
+    <!--    </td></tr>-->
+
+
+    <!--    <tr>-->
+    <!--      <td style="word-wrap: break-word;">Иванов Иван Иванович</td>-->
+    <!--    </tr>-->
+    <!--    <tr>-->
+    <!--      <td style="word-wrap: break-word;">Иванова Светлана Ивановна</td>-->
+    <!--    </tr>-->
+    <!--  {% else %}-->
+    <!--  <tr><td>Клиентов нет...</td></tr>-->
+    <!--  {% endif %}-->
+    <!--  </tbody>-->
+    <!--</table>-->
+
+    <!--    <form style="display: inline">-->
+    <!--        {% csrf_token %}-->
+    <!--        <button type="button" class="btn btn-success">Сохранить</button>-->
+    <!--    </form>-->
+    <!--    <form action="/create_client" method="get" style="display: inline">-->
+    <!--        {% csrf_token %}-->
+    <!--        <button type="submit" class="btn btn-warning">Создать</button>-->
+    <!--    </form>-->
+    <!--</div>-->
+
+
+    <!--</div>-->
+    <!--<br>-->
+
+        <script>
+            var element = document.getElementById('table-scroll-vertical');
+            element.scrollTop = element.scrollHeight;
+        </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+            integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+{% endblock %}

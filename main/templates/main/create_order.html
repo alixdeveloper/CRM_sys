@@ -1,0 +1,84 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<body>
+<nav class="navbar navbar-light bg-light">
+  <a class="navbar-brand" href="#">
+    Создание заказа
+  </a>
+</nav>
+<div class="container">
+<form action="create_order" method="post">
+    {% csrf_token %}
+Название заказа
+    <input class="form-control" name="name" type="text" placeholder="Текстом" required>
+Дата приема заказа
+    <input class="form-control date" name="create_date" type="date" name="date" >
+Дата завершения
+    <input class="form-control date" name="complete_date" type="date"><br>
+Примерный вес
+    <input class="form-control" name="weight" type="number" step="0.01" placeholder="Числом"><br>
+Примерная стоимость
+    <input class="form-control" name="price" type="number" step="0.01" placeholder="Числом">
+Предоплата
+    <input class="form-control prepayment" name="prepayment" step="0.01" id="prepayment" type="number" placeholder="Числом">
+    <a data-toggle="collapse" href="#prepayment_data" role="button" aria-expanded="false" aria-controls="collapseExample" style="margin-top:5px;" class="btn btn-primary checkbox" name="checkbox">Металл клиента</a><br>
+    <br><div class="collapse" id="prepayment_data">
+        <div class="card card-body">
+            Сколько грамм?
+            <table><tr><td><input class="form-control" name="preorder_weight" id="preorder_weight" onkeyup="calculate()" step="0.01" type="number" placeholder="Числом"></td><td nowrap><span>исходный</span></td></tr>
+            <tr><td><input class="form-control" id="preorder_weight_result" step="0.01" type="number"></td><td>-10%</td></tr>
+            </table>
+        </div>
+    </div>
+
+
+    <script>
+        function truncated(num) {
+ return Math.trunc(num * 100) / 100;
+}
+        function calculate() {
+            var weight = document.getElementById("preorder_weight");
+            var preorder_weight_result = document.getElementById("preorder_weight_result");
+            preorder_weight_result.value = truncated(parseFloat(weight.value)-parseFloat(weight.value)/10);
+        }
+    </script>
+
+
+    <script>
+
+var checkbox = document.querySelector("a[name=checkbox]");
+
+
+
+</script>
+Комментарий
+    <input class="form-control" name="comment" type="text" placeholder="Комментарий к заказу">
+Источник рекламы
+    <input class="form-control" name="ads" type="text" placeholder="Как узнал"><br>
+  <button type="submit" class="btn btn-primary">Создать заказ</button>
+</form>
+</div>
+<br>
+    <script>
+        var date = new Date();
+
+var day = date.getDate();
+var month = date.getMonth() + 1;
+var year = date.getFullYear();
+
+if (month < 10) month = "0" + month;
+if (day < 10) day = "0" + day;
+
+var today = year + "-" + month + "-" + day;
+var x = document.getElementsByClassName("date");
+var i;
+for (i = 0; i < x.length; i++) {
+  x[i].value = today;
+}
+
+</script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<nav class="navbar navbar-light bg-light">
+  <a class="navbar-brand" href="#">
+    Новое изделие
+  </a>
+</nav>
+<div class="container">
+<form action="create_product" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+Название
+    <input class="form-control" name="name" type="text" placeholder="Текст" required>
+Материал
+    <input class="form-control" name="material" type="text" placeholder="Текст">
+Цвет
+    <input class="form-control" name="color" type="text" placeholder="Текст">
+Размер
+    <input class="form-control" name="size" type="number" step="0.01" placeholder="Число">
+Примерный вес
+    <input class="form-control" name="weight" type="number" step="0.01" placeholder="Число">
+Длина
+    <input class="form-control" name="length" type="number" step="0.01" placeholder="Число">
+Ширина
+    <input class="form-control" name="width" type="number" step="0.01" placeholder="Число">
+Высота
+    <input class="form-control" name="height" type="number" step="0.01" placeholder="Число">
+Фото
+<div class="custom-file">
+    <input type="file" class="custom-file-input" name="photo" id="customFile">
+    <label class="custom-file-label" id='label' for="customFile">Загрузка фото</label>
+</div>
+
+    <br><br><button type="submit" class="btn btn-primary">Сохранить</button>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script>
+// Add the following code if you want the name of the file appear on select
+$(".custom-file-input").on("change", function() {
+  var fileName = $(this).val().split("\\").pop();
+      var label=  document.getElementById('label').textContent = fileName;
+
+
+});
+
+</script>
+
+</form>
+</div>
+
+
+
+
+
+
+{% endblock %}
