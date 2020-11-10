@@ -11,36 +11,93 @@
         text-align: left;
     }
 </style>
+
+
 <table class="table table-striped ">
   <thead>
     <tr>
       <th scope="col" class="align-middle">#</th>
-      <th scope="col" class="align-middle">Название </th>
+      <th scope="col" class="align-middle">Название {{decimal}}</th>
       <th scope="col" class="align-middle">Осталось времени</th>
       <th scope="col" class="align-middle">Статус</th>
     </tr>
   </thead>
   <tbody>
-      <tr>
-      <th class="align-middle" scope="row">{{ i.id }}</th>
-      <td class="align-middle">{{ i.name }}</td>
-      <td class="align-middle">{{ i.complete_date|timeuntil }}</td>
-      <td class="align-middle">{{ i.status }}</td>
-    </tr>
+  <style>.dropdown-item{padding: .55rem 1.5rem;!important;}
+button:focus{
+background-color:var(--focus_button)!important;
+}
+.dropdown-item{
+    font-size: 0.8em
+}
 
+</style>
   {% for i in orders %}
     <tr>
-      <th class="align-middle" scope="row">{{ i.id }}</th>
-        <td class="align-middle"><a href="/order/{{ i.id }}">{{ i.name }}</a></td>
-      <td class="align-middle">{{ i.complete_date|timeuntil:i.create_date }} (дней - {{ i|parse_iso_days}})</td>
-      <td class="align-middle">{{ i.status }}</td>
+      <th class="align-middle" scope="row" style="padding: 0">{{ i.id }}</th>
+        <td class="align-middle" style="padding: 0"><a href="/order/{{ i.id }}">{{ i.name }}</a></td>
+      <td class="align-middle">{{ i.complete_date|timeuntil }} <br>из {{ i|parse_iso_days}} дней</td>
+      <td class="align-middle" style="padding: 0; padding-right: 4px;">
+    <div class="btn-group dropleft">
+        <button type="button" class="btn btn-secondary dropdown-toggle" id="button{{i.id}}" data-toggle="dropdown" style="color:var(--secondary-color);font-size: 0.8em">{% if i.status == 'Ожидание предоплаты'%}Ожидание<br>предоплаты{%else%}{{ i.status }}{%endif%}</button>
+        <div class="dropdown-menu" style="background-color:var(--bg-color);color:var(--secondary-color);">
+            <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">Создан</a>
+            <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">Согласование</a>
+            <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">Ожидание предоплаты</a>
+            <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">В работе</a>
+            <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">Готов к выдаче</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">Завершен</a>
+        </div>
+    </div>
+</td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
+<script>
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', event => {
+                                            $.ajax({
+                                type: 'POST',
+                                url: '/change_order_status',
+                                data: {
+                                    data_id: $(item).attr('order_id'),
+                                    new_status: item.innerHTML,
+                                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                                    action: 'post'
+                                },
+                                beforeSend: function () {
 
+                                    // $(item).hide(250);
+                                },
+                                success: function (json) {
+                                    // $('#' + $(item).attr('name')).find('td').text('Удалено');
+                                    var button = document.getElementById('button'+$(item).attr('order_id'));
 
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+                                    if (item.innerHTML == 'Ожидание предоплаты') {
+                                        button.innerHTML = "Ожидание<br>предоплаты";
+                                    }
+                                    else{
+                                    button.innerHTML = item.innerHTML;}
+
+                                },
+                                error: function (xhr, errmsg, err) {
+                                    // $('#' + $(item).attr('name')).find('td').text('Ошибка! Можешь попробавть ещё...');
+
+                                    // $(item).show(250);
+
+                                    // $('#results').html("<div class='alert-box alert radius' data-alert>Oops! We have encountered an error: " + errmsg +
+                                    //     " <a href='#' class='close'>&times;</a></div>"); // add the error to the dom
+                                    // console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                                }
+
+                            });
+
+            })
+        })
+
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 {% endblock %}

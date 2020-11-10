@@ -6,5 +6,5 @@ register = Library()
 
 @register.filter(expects_localtime=True)
 def to_int(payment):
-    return float(payment.client_price)-float(payment.my_price)
+    return payment.client_count-payment.my_count
 

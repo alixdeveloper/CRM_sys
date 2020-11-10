@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script>
+function setText(elem, text, speed) {
+  // Обращаемся к элементу
+  var e = document.querySelector(elem);
+
+  // Устанавливаем начальную позицию
+  var i = 0,
+  // Создаём интервал
+      int = setInterval(function() {
+        // Если позиция равна количеству символов в тексте, то удаляем интервал
+        if(i == text.length){
+          clearInterval(int);
+        };
+        // Устанавливаем значение для textarea
+        e.value = text.substr(0,i); // Текст от начала до текущей позиции
+        // Прибавляем +1 к позиции
+        i++;
+      }, speed);
+
+  // Для фокуса
+  e.focus();
+  e.onblur = function() { clearInterval(int) };
+};
+
+window.onload = function() {
+  setText('#test', 'Привет это написано при помощи JS', 300);
+};</script>
+<p>Убери фокус с поля</p>
+<textarea id="test"></textarea>
+
+</body>
+</html>

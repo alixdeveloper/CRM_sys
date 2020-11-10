@@ -9,7 +9,7 @@ bot = telebot.TeleBot(settings.NOTIFICATION_TOKEN)
 
 class UpdateBot(View):
     def get(self, request, *args, **kwargs):
-        return HttpResponse("Бот запусчен и работает.")
+        return HttpResponse("Бот запущен и работает.")
 
     def post(self, request, *args, **kwargs):
         json_str = request.body.decode('UTF-8')

@@ -10,27 +10,30 @@
 <div class="container">
 <form action="create_order" method="post">
     {% csrf_token %}
+Дата создания заказа
+    <input class="form-control date" name="create_date" type="date" name="date" >
 Название заказа
     <input class="form-control" name="name" type="text" placeholder="Текстом" required>
-Дата приема заказа
-    <input class="form-control date" name="create_date" type="date" name="date" >
-Дата завершения
-    <input class="form-control date" name="complete_date" type="date"><br>
-Примерный вес
-    <input class="form-control" name="weight" type="number" step="0.01" placeholder="Числом"><br>
-Примерная стоимость
-    <input class="form-control" name="price" type="number" step="0.01" placeholder="Числом">
-Предоплата
-    <input class="form-control prepayment" name="prepayment" step="0.01" id="prepayment" type="number" placeholder="Числом">
-    <a data-toggle="collapse" href="#prepayment_data" role="button" aria-expanded="false" aria-controls="collapseExample" style="margin-top:5px;" class="btn btn-primary checkbox" name="checkbox">Металл клиента</a><br>
-    <br><div class="collapse" id="prepayment_data">
-        <div class="card card-body">
-            Сколько грамм?
-            <table><tr><td><input class="form-control" name="preorder_weight" id="preorder_weight" onkeyup="calculate()" step="0.01" type="number" placeholder="Числом"></td><td nowrap><span>исходный</span></td></tr>
-            <tr><td><input class="form-control" id="preorder_weight_result" step="0.01" type="number"></td><td>-10%</td></tr>
-            </table>
-        </div>
-    </div>
+Источник
+    <input class="form-control" name="ads" type="text" placeholder="Как узнал"><br>
+
+<!--Дата завершения-->
+<!--    <input class="form-control date" name="complete_date" type="date"><br>-->
+<!--Примерный вес-->
+<!--    <input class="form-control" name="weight" type="number" step="0.01" placeholder="Числом"><br>-->
+<!--Примерная стоимость-->
+<!--    <input class="form-control" name="price" type="number" step="0.01" placeholder="Числом">-->
+<!--Предоплата-->
+<!--    <input class="form-control prepayment" name="prepayment" step="0.01" id="prepayment" type="number" placeholder="Числом">-->
+<!--    <a data-toggle="collapse" href="#prepayment_data" role="button" aria-expanded="false" aria-controls="collapseExample" style="margin-top:5px;" class="btn btn-primary checkbox" name="checkbox">Металл клиента</a><br>-->
+<!--    <br><div class="collapse" id="prepayment_data">-->
+<!--        <div class="card card-body">-->
+<!--            Сколько грамм?-->
+<!--            <table><tr><td><input class="form-control" name="preorder_weight" id="preorder_weight" onkeyup="calculate()" step="0.01" type="number" placeholder="Числом"></td><td nowrap><span>исходный</span></td></tr>-->
+<!--            <tr><td><input class="form-control" id="preorder_weight_result" step="0.01" type="number"></td><td>-10%</td></tr>-->
+<!--            </table>-->
+<!--        </div>-->
+<!--    </div>-->
 
 
     <script>
@@ -53,9 +56,7 @@ var checkbox = document.querySelector("a[name=checkbox]");
 
 </script>
 Комментарий
-    <input class="form-control" name="comment" type="text" placeholder="Комментарий к заказу">
-Источник рекламы
-    <input class="form-control" name="ads" type="text" placeholder="Как узнал"><br>
+    <input class="form-control" name="comment" type="text" placeholder="Комментарий к заказу"><br>
   <button type="submit" class="btn btn-primary">Создать заказ</button>
 </form>
 </div>

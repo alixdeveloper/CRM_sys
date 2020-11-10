@@ -4,635 +4,820 @@
 {% load parse_iso %}
 {% load parse_iso_order %}
 {% load static %}
+{% load order_analysis %}
+{% load get_product_photos %}
 {% load to_int %}
+{% load to_str %}
 {% load get_orders_of_product %}
 {% load get_clients_of_order %}
 {% load check_order %}
 {% load check_client %}
 {% load tz %}
 
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js">$.noConflict(true);</script>
+<script type="text/javascript">
+
+
+</script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+
 <style>
 
-    th, td{
-        border: none!important
-    }
-    .scrollbar {
-margin-left: 30px;
-float: left;
-height: 300px;
-width: 65px;
-background: black;
-overflow-y: scroll;
-margin-bottom: 25px;
-}
-.force-overflow {
-min-height: 450px;
-}
-table{
-    margin-bottom: 0!important;
-}
-.scrollbar-primary::-webkit-scrollbar {
-width: 12px;
-background-color: var(--bg-color); }
 
-.scrollbar-primary::-webkit-scrollbar-thumb {
-border-radius: 10px;
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #4285F4; }
-
-.scrollbar-primary {
-scrollbar-color: #4285F4 #F5F5F5;
-}
-
-.scrollbar-danger::-webkit-scrollbar-track {
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #F5F5F5;
-border-radius: 10px; }
-
-.scrollbar-danger::-webkit-scrollbar {
-width: 12px;
-background-color: #F5F5F5; }
-
-.scrollbar-danger::-webkit-scrollbar-thumb {
-border-radius: 10px;
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #ff3547; }
-
-.scrollbar-danger {
-scrollbar-color: #ff3547 #F5F5F5;
-}
-
-.scrollbar-warning::-webkit-scrollbar-track {
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #F5F5F5;
-border-radius: 10px; }
-
-.scrollbar-warning::-webkit-scrollbar {
-width: 12px;
-background-color: #F5F5F5; }
-
-.scrollbar-warning::-webkit-scrollbar-thumb {
-border-radius: 10px;
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #FF8800; }
-
-.scrollbar-warning {
-scrollbar-color: #FF8800 #F5F5F5;
-}
-
-.scrollbar-success::-webkit-scrollbar-track {
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #F5F5F5;
-border-radius: 10px; }
-
-.scrollbar-success::-webkit-scrollbar {
-width: 12px;
-background-color: #F5F5F5; }
-
-.scrollbar-success::-webkit-scrollbar-thumb {
-border-radius: 10px;
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #00C851; }
-
-.scrollbar-success {
-scrollbar-color: #00C851 #F5F5F5;
-}
-
-.scrollbar-info::-webkit-scrollbar-track {
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #F5F5F5;
-border-radius: 10px; }
-
-.scrollbar-info::-webkit-scrollbar {
-width: 12px;
-background-color: #F5F5F5; }
-
-.scrollbar-info::-webkit-scrollbar-thumb {
-border-radius: 10px;
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #33b5e5; }
-
-.scrollbar-info {
-scrollbar-color: #33b5e5 #F5F5F5;
-}
-
-.scrollbar-default::-webkit-scrollbar-track {
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #F5F5F5;
-border-radius: 10px; }
-
-.scrollbar-default::-webkit-scrollbar {
-width: 12px;
-background-color: #F5F5F5; }
-
-.scrollbar-default::-webkit-scrollbar-thumb {
-border-radius: 10px;
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #2BBBAD; }
-
-.scrollbar-default {
-scrollbar-color: #2BBBAD #F5F5F5;
-}
-
-.scrollbar-secondary::-webkit-scrollbar-track {
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #F5F5F5;
-border-radius: 10px; }
-
-.scrollbar-secondary::-webkit-scrollbar {
-width: 12px;
-background-color: #F5F5F5; }
-
-.scrollbar-secondary::-webkit-scrollbar-thumb {
-border-radius: 10px;
--webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-background-color: #aa66cc; }
-
-.scrollbar-secondary {
-scrollbar-color: #aa66cc #F5F5F5;
-}
 </style>
 <nav class="navbar navbar-light bg-light">
     <a class="navbar-brand" href="#">
         <h1>Заказ {{ order.id }}</h1>
     </a>
+
 </nav>
 
-
 <div class="container">
-
     <form action="/order/{{ order.id }}/" method="post">
         {% csrf_token %}
         <div class="card card-body" style="margin-top: 10px;">
 
             Название заказа
-            <input class="form-control" name="name" type="text" placeholder="Текстом" value="{{ order.name }}" disabled>
+            <input class="form-control order-data" content="Название заказа" name="name" type="text"
+                   placeholder="Текстом" value="{{ order.name }}">
             Дата приема заказа
-            <input class="form-control date" name="create_date" type="date" value="{{ order.create_date|timezone:'Europe/Moscow'|parse_iso }}"
-                   disabled>
-            Дата завершения
-            <input class="form-control date" name="complete_date" type="date"
-                   value="{{ order.complete_date|timezone:'Europe/Moscow'|parse_iso }}" disabled><br>
+            <input class="form-control date order-data" content="Дата приема заказа" name="create_date" type="date"
+                   value="{{ order.create_date|timezone:'Europe/Moscow'|parse_iso }}"
+            >
+<!--            Дата завершения-->
+<!--            <input class="form-control date order-data" content="Дата завершения" name="complete_date" type="date"-->
+<!--                   value="{{ order.complete_date|timezone:'Europe/Moscow'|parse_iso }}"><br>-->
             Примерный вес
-            <input class="form-control" name="weight" type="number" placeholder="Числом" value="{{ order.weight }}"
-                   disabled><br>
-            Примерная стоимость
-            <input class="form-control" name="price" type="number" placeholder="Числом" value="{{ order.price }}"
-                   disabled>
-            Предоплата
-            <input class="form-control" name="prepayment" type="number" placeholder="Числом"
-                   value="{{ order.prepayment }}" disabled><br>
-            {% if order.preorder_weight %}
-            Предоплата металлом
-            <table>
-                <tr>
-                    <td><input class="form-control" name="prepayment" id="preorder_weight" type="number"
-                               placeholder="Числом" value="{{ order.preorder_weight }}" disabled></td>
-                    <td nowrap><span>вес</span></td>
-                </tr>
-                <tr>
-                    <td><input class="form-control" id="preorder_weight_result" step="0.01" type="number" disabled></td>
-                    <td>-10%</td>
-                </tr>
-            </table>
-
-            <script>
-                function truncated(num) {
-                    return Math.trunc(num * 100) / 100;
-                }
-
-                function calculate() {
-                    var weight = document.getElementById("preorder_weight");
-                    var preorder_weight_result = document.getElementById("preorder_weight_result");
-                    preorder_weight_result.value = truncated(parseFloat(weight.value) - parseFloat(weight.value) / 10);
-                }
-
-                calculate()
-            </script>
-            {% endif %}
+            <input class="form-control order-data" id="weight" content="Примерный вес" name="weight" type="number"
+                   placeholder="Числом"
+                   value="{{ order.weight }}"
+            ><br>
+<!--            Примерная стоимость-->
+<!--            <input class="form-control order-data" name="price" type="number" content="Примерная стоимость"-->
+<!--                   placeholder="Числом" value="{{ order.price }}"-->
+<!--            >-->
+<!--            Предоплата-->
+<!--            <input class="form-control order-data" content="Предоплата" name="prepayment" type="number"-->
+<!--                   placeholder="Числом"-->
+<!--                   value="{{ order.prepayment }}"><br>-->
             Источник рекламы
 
-            <input class="form-control" name="ads" type="text" placeholder="Как узнал" value="{{ order.ads }}" disabled><br>
+            <input class="form-control order-data" name="ads" content="Источник рекламы" type="text"
+                   placeholder="Как узнал" value="{{ order.ads }}"><br>
         </div>
-{% if order|check_order%}
-        <!--Начало блока изделия-->
-        <br><h2>Изделия</h2>
-        {% for product in products %}
-        {% if order in product|get_orders_of_product %}
-        <a data-toggle="collapse" href="#product{{product.id}}" role="button" aria-expanded="false"
+            <br>
+    <div class="btn-group-vertical">
+
+        <a href="/create_product" name="create" value="create" class="btn btn-secondary">Добавить изделие</a></td></tr>
+        <a href="/create_client" name="create" value="create" class="btn btn-secondary">Добавить клиента</a></td></tr>
+    </div>
+            <br>
+            <br>
+
+        {% if order|check_client %}
+        <!--Начало блока клиента-->
+        <br>
+        <h2>Клиенты</h2>
+        {% for client in order|get_clients_of_order %}
+        <a data-toggle="collapse" href="#client{{client.id}}" role="button" aria-expanded="false"
            aria-controls="collapseExample">
-            <h4>{{ product.name }}</h4>
+            <h4>{% if client.first_name %}{{client.first_name}} (id {{client.id}}){% elif client.last_name %}{{client.last_name}} (id {{client.id}})
+                {%elif client.middle_name %}{{client.middle_name}} (id {{client.id}}){% else %}Ошибка! Нет имени!{% endif %}</h4>
         </a>
 
+        <div class="collapse" client_id="{{client.id}}" id="client{{client.id}}">
+            <div class="card card-body">
+
+                <div class="container">
+                    Фамилия
+                    <input label="Фамилия" client_id="{{client.id}}" class="form-control client-data" name="last_name"
+                           type="text" value="{{ client.last_name }}"
+                           placeholder="Текст">
+                    Имя
+                    <input label="Имя" client_id="{{client.id}}" class="form-control client-data" name="first_name"
+                           type="text" value="{{ client.first_name}}"
+                           placeholder="Текст">
+                    Отчество
+                    <input label="Отчество" client_id="{{client.id}}" class="form-control client-data"
+                           name="middle_name" type="text" value="{{ client.middle_name}}"
+                           placeholder="Текст">
+                    Номер телефона
+                    <table style="table table-striped">
+                        <tr>
+                            <td>
+                                <input label="Номер телефона" style="display:inline;width:100%"
+                                       client_id="{{client.id}}" class="form-control client-data" name="phone"
+                                       type="number"
+                                       value="{{ client.phone }}"
+                                       placeholder="7 918 000 00 00">
+                            </td>
+                            <td>
+                                <a class="" client_id="{{client.id}}" href="tel:{{ client.phone }}"><span
+                                        style="background-color:var(--background-form);" class="btn btn-primary">Позвонить</span></a>
+                            </td>
+                        </tr>
+                    </table>
+                    Удобный способ связи
+                    {% if client.communication_type %}
+
+                    <select label="Удобный способ связи" client_id="{{client.id}}" class="form-control client-data"
+                            value="{{ client.communication_type }}" id="communication_type" name="communication_type"
+                            data-live-search="true">
+                        <option value="{{ client.communication_type }}" selected>{{ client.communication_type }}
+                        </option>
+                        <option value="Любой">Любой</option>
+                        {% else %}
+                        <select label="Удобный способ связи"class="form-control client-data" value="Любой"
+                                id="communication_type" name="communication_type" client_id="{{client.id}}" data-live-search="true">
+
+                            <option value="Любой" selected>Любой</option>
+                            {% endif %}
+                            <option value="Телефон">Телефон</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="VK">VK</option>
+                            <option value="Telegram">Telegram</option>
+                            <option value="Facebook">Facebook</option>
+                            <option value="WhatsApp">WhatsApp</option>
+                            <option value="Email">Email</option>
+                            <option value="Viber">Viber</option>
+                            <option value="Личная встреча">Личная встреча</option>
+                            <option value="SMS">SMS</option>
+                        </select>
+
+                        Город
+                        <input label="Город" client_id="{{client.id}}" class="form-control client-data" name="city"
+                               type="text" value="{{ client.city }}" placeholder="Текст"><br>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+        <!--Конец блока клиента-->
+        {%endif%}
+
+        {% if order|check_order%}
+        <!--Начало блока изделия-->
+        <br>
+        <h2>Изделия</h2>
+        {% for product in products %}
+        {% if order in product|get_orders_of_product %}
+        <table class="table" >
+        <tr><td style="padding: 0; vertical-align: middle!important;"><a data-toggle="collapse" class="clickcollapse" href="#product{{product.id}}" role="button" aria-expanded="false"
+           aria-controls="collapseExample">
+            <h4>{{ product.name }}  (id {{product.id}})</h4>
+        </a></td><td style="text-align: right">
+        <button type="button" class="btn btn-secondary dropdown-toggle" id="button{{product.id}}" data-toggle="dropdown" style="color:var(--secondary-color)">{{product.status}}</button>
+        <div class="dropdown-menu dropdown-menu-right" style="background-color:var(--bg-color);color:var(--secondary-color)">
+            <a style="color:var(--secondary-color)" status="{{product.status}}" product_id="{{product.id}}" class="dropdown-item">Создан</a>
+            <a style="color:var(--secondary-color)" status="{{product.status}}" product_id="{{product.id}}" class="dropdown-item">Согласование</a>
+            <a style="color:var(--secondary-color)" status="{{product.status}}" product_id="{{product.id}}" class="dropdown-item">Ожидание предоплаты</a>
+            <a style="color:var(--secondary-color)" status="{{product.status}}" product_id="{{product.id}}" class="dropdown-item">В работе</a>
+            <a style="color:var(--secondary-color)" status="{{product.status}}" product_id="{{product.id}}" class="dropdown-item">Готов к выдаче</a>
+            <div class="dropdown-divider"></div>
+            <a style="color:var(--secondary-color)" status="{{product.status}}" product_id="{{product.id}}" class="dropdown-item">Завершен</a>
+        </div>
+</tr></td>
+</table>
 
         <div class="collapse" id="product{{product.id}}">
             <div class="card card-body">
 
                 <div class="container">
-<!--                    <form action="create_product" method="post" enctype="multipart/form-data">-->
-                        {% csrf_token %}
-                        Название
-                        <input class="form-control" name="name" type="text" value="{{ product.name }}"
-                               placeholder="Текст" disabled>
-                        Материал
-                        <input class="form-control" name="material" type="text" value="{{ product.material }}"
-                               placeholder="Текст" disabled>
-                        Цвет
-                        <input class="form-control" name="color" type="text" value="{{ product.color }}"
-                               placeholder="Текст" disabled>
-                        Примерный вес
-                        <input class="form-control" name="weight" type="number" value="{{ product.weight }}" step="0.01"
-                               placeholder="Число" disabled>
-                        Длина
-                        <input class="form-control" name="length" type="number" value="{{ product.length }}" step="0.01"
-                               placeholder="Число" disabled>
-                        Ширина
-                        <input class="form-control" name="width" type="number" value="{{ product.width }}" step="0.01"
-                               placeholder="Число" disabled>
-                        Высота
-                        <input class="form-control" name="height" type="number" value="{{ product.height }}" step="0.01"
-                               placeholder="Число" disabled>
-                        Размер
-                        <input class="form-control" name="size" type="number" value="{{ product.size }}"
-                               placeholder="Число" disabled>
-                    {% if product.photo%}
-                    <br>
-                        <img style="border-radius: 3px" src="{% static 'uploads/image/'%}{{ product.photo }}"
-                             class="img-fluid" alt="Responsive image">
+                                        <form action="create_product" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    Название
+                    <input class="form-control product-data" label="Название" product_id="{{ product.id }}" name="product_name_{{ product.id }}" type="text" value="{{ product.name }}"
+                           placeholder="Текст">
+                    Дата завершения
+            <input class="form-control date product-data" product_id = "{{ product.id }}" content="Дата завершения" name="complete_date_product_{{ product.id }}" type="date"
+                   value="{{ product.complete_date|timezone:'Europe/Moscow'|parse_iso }}"
+            >
+                    Категория изделия
+                    <select class="form-control product-data sel" value="{{product.category}}" label="Категория изделия" product_id="{{ product.id }}" name="category_{{ product.id }}" data-live-search="true">
+                          <option selected value="{{ product.category }}">{{ product.category }}</option>
+                      {% for category in ProductCategory %}
+                        <option value="{{ category.name }}">{{ category.name }}</option>
+                      {% endfor %}
+                                <option value="Добавить новую">Добавить новую</option>
+
+                    </select>
+                          <span style="display: none" class="new_category">Добавить категорию<input class="form-control" name="new_category_{{product.id}}"  placeholder="Название категории" type="text"><br>
+</span>
+
+                    Материал
+                    <input class="form-control product-data" label="Материал" product_id="{{ product.id }}" name="product_material_{{ product.id }}" type="text" value="{{ product.material }}"
+                           placeholder="Текст">
+                    Цвет
+                    <input class="form-control product-data" label="Цвет" product_id="{{ product.id }}" name="product_color_{{ product.id }}" type="text" value="{{ product.color }}"
+                           placeholder="Текст">
+                    Примерный вес
+                    <input class="form-control product-data" label="Примерный вес" product_id="{{ product.id }}" name="product_weight_{{ product.id }}" type="number" value="{{ product.weight }}" step="0.01"
+                           placeholder="Число">
+                    {% if product.preorder_weight %}
+                    Металл клиента
+                            <table><tr><td><input label="Металл клиента" class="form-control product-data" product_id="{{ product.id }}" value="{{ product.preorder_weight }}" name="preorder_weight_product_{{ product.id }}" id="preorder_weight" onkeyup="calculate()" step="0.01" type="number" placeholder="Числом"></td><td nowrap><span>исходный</span></td></tr>
+                            <tr><td><input class="form-control" id="preorder_weight_result" step="0.01" type="number"></td><td>-10%</td></tr>
+                            </table>
+
                     {% endif %}
-                </div>
 
-            </div>
-        </div>
-        {% endif %}
-        {% endfor %}
-        {% endif %}
-                        <br>
-        <!--Конец блока изделия-->
-{% if order|check_client %}
-        <!--Начало блока клиента-->
-        <br><h2>Клиенты</h2>
-        {% for client in order|get_clients_of_order %}
-        <a data-toggle="collapse" href="#client{{client.id}}" role="button" aria-expanded="false"
-           aria-controls="collapseExample">
-            <h4>{% if client.first_name %}{{client.first_name}}{% elif client.last_name %}{{client.last_name}}{%elif client.middle_name %}{{client.middle_name}}{% else %}Ошибка! Нет имени!{% endif %}</h4>
-        </a>
-
-
-        <div class="collapse" id="client{{client.id}}">
-            <div class="card card-body">
-
-                <div class="container">
-Фамилия
-    <input class="form-control" name="last_name" type="text" value="{{ client.last_name }}" placeholder="Текст" disabled>
-Имя
-    <input class="form-control" name="first_name" type="text" value="{{ client.first_name}}" placeholder="Текст" disabled>
-Отчество
-    <input class="form-control" name="middle_name" type="text" value="{{ client.middle_name}}" placeholder="Текст" disabled>
-Номер телефона
-    <input class="form-control" name="phone" type="number" value="{{ client.phone }}" placeholder="7 918 000 00 00" disabled>
-Удобный способ связи
-    <select class="form-control" name="communication_type" disabled data-live-search="true">
-        {% if client.communication_type %}
-        <option value="{{ client.communication_type }}" selected>{{ client.communication_type }}</option>
-        <option>Любой</option>
-        {% else %}
-        <option selected>Любой</option>
-        {% endif %}
-      <option>Телефон</option>
-      <option>Instagram</option>
-      <option>VK</option>
-      <option>Telegram</option>
-      <option>Facebook</option>
-      <option>WhatsApp</option>
-      <option>Email</option>
-      <option>Viber</option>
-      <option>Личная встреча</option>
-      <option>SMS</option>
-    </select>
-
-Город
-    <input class="form-control" name="city" type="text" value="{{ client.city }}" placeholder="Текст" disabled><br>
+                    Длина
+                    <input class="form-control product-data" label="Длина" product_id="{{ product.id }}" name="product_length_{{ product.id }}" type="number" value="{{ product.length }}" step="0.01"
+                           placeholder="Число">
+                    Ширина
+                    <input class="form-control product-data" label="Ширина" product_id="{{ product.id }}" name="product_width_{{ product.id }}" type="number" value="{{ product.width }}" step="0.01"
+                           placeholder="Число">
+                    Высота
+                    <input class="form-control product-data" label="Высота" product_id="{{ product.id }}" name="product_height_{{ product.id }}" type="number" value="{{ product.height }}" step="0.01"
+                           placeholder="Число">
+                    Размер
+                    <input class="form-control product-data" label="Размер" product_id="{{ product.id }}" name="product_size_{{ product.id }}" type="number" value="{{ product.size }}"
+                           placeholder="Число">
+                    {% if product.photo%}
+                    {% for photo in product|get_product_photos %}
                     <br>
+                    <img style="border-radius: 3px" label="" product_id="{{ product.id }}" src="{% static 'uploads/image/'%}{{ photo }}"
+                         class="img-fluid" alt="Responsive image">
+                    {% endfor %}
+                    {% else %}
+                    Фото
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" name="photo_{{ product.id }}" id="customFile">
+                        <label class="custom-file-label" id='label' for="customFile">Загрузка фото</label>
                     </div>
 
+                        <br><br><button type="submit" class="btn btn-primary">Сохранить</button>
+
+
+
+                                        </form>
+
+
+                </div>
+
+        </div>
+        {% endif %}
+        {% endif %}
+
+                        </div>
+
+    </form>
+</div>
+                    <h2>Комментарии изделия {{ product.name }}</h2>
+
+
+        <div class="card card-body" style="margin-top: 10px; padding-left: 0; padding-right:0">
+
+            <div class="table-responsive table-scroll-vertical scrollbar-primary overflow-auto"
+                 >
+                <table style="font-size:.8rem!important" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th scope="col">Время</th>
+                        <th scope="col">Сообщение</th>
+                    </tr>
+                    </thead>
+                    <style>.table-sm td, .table-sm th {
+    padding: .75rem;
+}
+                    </style>
+                    <tbody id="data_of_comments_product{{product.id}}">
+                    {% if comments_product %}
+                    {% for message in comments_product %}
+                    {% if message.comment_type != 'product' and message.comment_type|to_str == product.id|to_str %}
+                                        <tr id="{{ message.id }}">
+                        <th scope="row">{{ message.date|timezone:"Europe/Moscow"|parse_iso_order }}</th>
+                        <td style="word-wrap: break-word;">{{ message.message }}
+                            <button type="button" style="display:inline" class="close close_comment"
+                                    name="{{ message.id }}" aria-label="Close"><span aria-hidden="true">&times;</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {%else%}
+                    <tr style="background-color:#dbc63466" id="{{ message.id }}">
+                        <th scope="row">{{ message.date|timezone:"Europe/Moscow"|parse_iso_order }}</th>
+
+                        <td style="word-wrap: break-word;">
+                            <a style="color:var(--secondary-color)"
+                                                              data-toggle="collapse" href="#product{{ message.id }}"
+                                                              role=""
+                                                              aria-expanded="false" aria-controls="collapseExample"
+                                                              style="margin-top:5px;" class="" name="checkbox">Изменение
+                            поля "Изделие"
+
+                        </a></td>
+
+                    </tr>
+
+
+                    <tr>
+                        <td colspan="2" style="padding:0;">
+                            <div class="collapse" id="product{{ message.id }}">
+                                <div class="card card-body" style="padding: 0;padding-bottom:5px; border-radius:0; border:none;">
+                                    <div class="table-responsive">
+                                        <table style="background-color: transparent;" class="table table-sm">
+                                            <tr>
+                                                <td>Было</td>
+                                                <td>{{ message.prev }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Стало</td>
+                                                <td>{{ message.new }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>ID</td>
+                                                <td>{{ message.identification }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    {% else %}
+                    <tr id="empty_label_comment_product{{product.id}}">
+                        <td></td>
+                        <td>Записей нет...</td>
+                    </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
             </div>
         </div>
+        Комментарий
+        <textarea class="form-control comment_product_text" id="comment_product{{product.id}}" name="comment" product_id="{{product.id}}"  rows="3"></textarea><br>
+        <button type="button" style="width:200px; height:38px;" product_id="{{product.id}}" class="btn btn-primary new_comment_product" id="new_comment_product">
+            <span style="display:none" id="spinner_product{{product.id}}" class="loader"></span>
+            <span id="comment_label_product{{product.id}}" style="color:#fff">Добавить комментарий</span></button>
+</div>
+
         {% endfor %}
-                        <br>
-        <!--Конец блока клиента-->
-{%endif%}
-
-        <h2>Комментарии</h2>
+        {% endif %}
 
 
-    <div class="card card-body" style="margin-top: 10px;">
 
-        <div class="table-responsive table-scroll-vertical scrollbar-primary overflow-auto" id="table-scroll-vertical">
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th scope="col">Время</th>
-                    <th scope="col">Сообщение</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% if comments %}
-                {% for message in comments %}
-                <tr>
-                    <th scope="row">{{ message.date|timezone:"Europe/Moscow"|parse_iso_order }}</th>
-                    <td style="word-wrap: break-word;">{{ message.message }}</td>
-                </tr>
-                {% endfor %}
-                {% else %}
-                <tr>
-                    <td></td>
-                    <td>Записей нет...</td>
+                <script>
+        function truncated(num) {
+ return Math.trunc(num * 100) / 100;
+}
+        function calculate() {
+            var weight = document.getElementById("preorder_weight");
+            var preorder_weight_result = document.getElementById("preorder_weight_result");
+            preorder_weight_result.value = truncated(parseFloat(weight.value)-parseFloat(weight.value)/10);
+        }
+        calculate();
+    </script>
+
+<script>
+
+    document.querySelectorAll('.sel').forEach(item => {
+                item.addEventListener('change',function(){
+        if (item.selectedOptions[0].innerText == "Добавить новую") {
+
+            item.nextElementSibling.style.display = 'inline'
+        }        else {
+            item.nextElementSibling.style.display = 'none';
+        }
+})});
+
+</script>
+
+        <h2>Комментарии заказа</h2>
+
+
+        <div class="card card-body" style="margin-top: 10px; padding-left: 0; padding-right:0">
+
+            <div class="table-responsive table-scroll-vertical scrollbar-primary overflow-auto"
+                 >
+                <table style="font-size:.8rem!important" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th scope="col">Время</th>
+                        <th scope="col">Сообщение</th>
+                    </tr>
+                    </thead>
+                    <style>.table-sm td, .table-sm th {
+    padding: .75rem;
+}
+                    </style>
+                    <tbody id="data_of_comments_order">
+                    {% if comments %}
+                    {% for message in comments %}
+                    {% if message.comment_type == 'comment' %}
+                    <tr id="{{ message.id }}">
+                        <th scope="row">{{ message.date|timezone:"Europe/Moscow"|parse_iso_order }}</th>
+                        <td style="word-wrap: break-word;">{{ message.message }}
+                            <button type="button" style="display:inline" class="close close_comment"
+                                    name="{{ message.id }}" aria-label="Close"><span aria-hidden="true">&times;</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% elif message.comment_type == 'info' %}
+                    <tr style="background-color:#dbc63466" id="{{ message.id }}">
+                        <th scope="row">{{ message.date|timezone:"Europe/Moscow"|parse_iso_order }}</th>
+
+                        <td style="word-wrap: break-word;">
+                            <a style="color:var(--secondary-color)"
+                                                              data-toggle="collapse" href="#order{{ message.id }}"
+                                                              role=""
+                                                              aria-expanded="false" aria-controls="collapseExample"
+                                                              style="margin-top:5px;" class="" name="checkbox">Изменение
+                            поля "Заказ"
+
+                        </a></td>
+
+                    </tr>
+
+
+                    <tr>
+                        <td colspan="2" style="padding:0;">
+                            <div class="collapse" id="order{{ message.id }}">
+                                <div class="card card-body" style="padding: 0;padding-bottom:5px; border-radius:0; border:none;">
+                                    <div class="table-responsive">
+                                        <table style="background-color: transparent;" class="table table-sm">
+                                            <tr>
+                                                <td>Было</td>
+                                                <td>{{ message.prev }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Стало</td>
+                                                <td>{{ message.new }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>ID</td>
+                                                <td>{{ message.identification }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% elif message.comment_type == 'client' %}
+                    <tr style="background-color:#dbc63466" id="{{ message.id }}">
+                        <th scope="row">{{ message.date|timezone:"Europe/Moscow"|parse_iso_order }}</th>
+
+                        <td style="word-wrap: break-word;">
+                            <a style="color:var(--secondary-color)"
+                                                              data-toggle="collapse" href="#client{{ message.id }}"
+                                                              role=""
+                                                              aria-expanded="false" aria-controls="collapseExample"
+                                                              style="margin-top:5px;" class="" name="checkbox">Изменение
+                            поля "Клиент"
+
+                        </a></td>
+
+                    </tr>
+
+
+                    <tr>
+                        <td colspan="2" style="padding:0;">
+                            <div class="collapse" id="client{{ message.id }}">
+                                <div class="card card-body" style="padding: 0;padding-bottom:5px; border-radius:0; border:none;">
+                                    <div class="table-responsive">
+                                        <table style="background-color: transparent;" class="table table-sm">
+                                            <tr>
+                                                <td>Было</td>
+                                                <td>{{ message.prev }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Стало</td>
+                                                <td>{{ message.new }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>ID</td>
+                                                <td>{{ message.identification }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    {% else %}
+                    <tr id="empty_label_comment_order">
+                        <td></td>
+                        <td>Записей нет...</td>
+                    </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        Комментарий
+        <textarea class="form-control" name="comment" id="comment_order" rows="3"></textarea><br>
+        <button type="button" style="width:200px; height:38px;" class="btn btn-primary new_comment_order" id="new_comment_order">
+            <span style="display:none" id="spinner_order" class="loader"></span>
+            <span id="comment_label_order" style="color:#fff">Добавить комментарий</span></button>
+        <style>
+
+        </style>
+    </form>
+    <script>
+
+
+
+    </script>
+
+    <br>
+
+    <br>
+    <br>
+    <br>
+
+
+    <style>
+
+    </style>
+
+    <h2>Деньги</h2>
+    <div class="card card-body" style="">
+        <div class="table-responsive">
+            <table id="payment_table" style="" class="title_table table table-sm list_table">
+                {% if payments %}
+                <tr class="title-name">
+                    <td>Действие</td>
+                    <td>₽ мои</td>
+                    <td>Наценка</td>
+                    <td>₽&#160;клиента</td>
                 </tr>
                 {% endif %}
-                </tbody>
+                <!--                        <tr><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td></tr>-->
+
+                {% for payment in payments %}
+                {% if payment.type_operation == '+' %}
+                <tr class="close_payment" name="{{payment.id}}" style="background-color:#4fdc3596">
+                    <td class="data_table">{{ payment.name }}</td>
+                    <td class="data_table">{{ payment.my_count }}</td>
+                    <td class="data_table">0</td>
+                    <td class="data_table">0</td>
+                </tr>
+                {% elif payment.type_operation == '=' %}
+                <tr class="close_payment" name="{{payment.id}}" style="background-color:#387cff">
+                    <td class="data_table">{{ payment.name }}</td>
+                    <td class="data_table">{{ payment.my_count }}</td>
+                    <td class="data_table">0</td>
+                    <td class="data_table">{{ payment.my_count }}</td>
+                </tr>
+                {% elif payment.type_operation == '-' %}
+                <tr class="close_payment" name="{{payment.id}}" style="background-color:#dc354596">
+                    <td class="data_table">{{ payment.name }}</td>
+                    <td class="data_table">{{ payment.my_count }}</td>
+                    <td class="data_table">{{ payment|to_int }}</td>
+                    <td class="data_table">{{ payment.client_count }}</td>
+
+                </tr>
+                {% endif %}
+                {% endfor %}
             </table>
-        </div>
-    </div>
-        Комментарий
-        <textarea class="form-control" name="comment" id="exampleFormControlTextarea1" rows="3"></textarea><br>
-        <button type="submit" class="btn btn-primary">Добавить комментарий</button>                    </form>
-    <br>
-<div class="btn-group-vertical">
-
-                  <a href="/create_product" name="create" value="create" class="btn btn-secondary">Добавить изделие</a></td></tr>
-                  <a href="/create_client" name="create" value="create" class="btn btn-secondary">Добавить клиента</a></td></tr>
-    </div>
-
-    <br>
-    <br>
-    <br>
 
 
-    <style>th, td{text-align: left; vertical-align: bottom!important;}
-            .list_table tr td, .list_table tr th{
-                vertical-align: middle!important;
-            }
-    </style>
-    <h2>Финансы</h2>
-            <div class="card card-body" >
-                <div class="table-responsive">
-                    <table class="table table-sm list_table">
-                        <tr><th>Расход</th><th>Моя цена</th><th>Наценка</th><th>Цена клиенту</th></tr>
-<!--                        <tr><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td></tr>-->
+            <a data-toggle="collapse" href="#money" role="button" aria-expanded="false" aria-controls="collapseExample"
+               style="margin-top:5px;" class="btn btn-primary checkbox" name="checkbox">Новый платеж</a><br><br>
+
+
+            <div class="collapse" id="money">
+                <form action="/create_payment" method="post" name="cash">
+                    {% csrf_token %}
+                    <div class="card card-body" style="padding:5px">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="btn-group btn-group-toggle"
+                                             style="justify-content: center; width:100%" data-toggle="buttons">
+                                            <label class="btn btn-secondary active">
+                                                <input type="radio" name="options" onchange="my_function('-')" value="-"
+                                                       id="option1" checked>Расход</label>
+                                            <label class="btn btn-secondary">
+                                                <input type="radio" onchange="my_function('+')" name="options" value="+"
+                                                       id="option2">Доход</label>
+                                            <label class="btn btn-secondary">
+                                                <input type="radio" onchange="my_function('=')" name="options" value="="
+                                                       id="option3">Моя работа</label>
+                                        </div>
+                                        <br></td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="3"><p id="title" style="display: inline">Описание</p><input required
+                                                                                                             id="description"
+                                                                                                             name="description"
+                                                                                                             class="form-control"
+                                                                                                             type="text"
+                                                                                                             placeholder="Комментарий расхода">
+                                    </td>
+                                </tr>
+                                <tr id="first">
+                                    <td colspan="3"><p id="count" style="display: inline">Моя цена</p><input required
+                                                                                                             id="my_price"
+                                                                                                             name="my_price"
+                                                                                                             min=0
+                                                                                                             step="any"
+                                                                                                             onkeyup="calculate_price0()"
+                                                                                                             class="form-control"
+                                                                                                             type="number"
+                                                                                                             placeholder="Сколько денег потрачено">
+                                    </td>
+                                </tr>
+
+                                <tr id="content_calc">
+                                    <td>Наценка<input id="one" name="one" step="any" class="form-control calc" value=""
+                                                      onkeyup="calculate_price1()" type="number" placeholder="Наценка">
+                                    </td>
+                                    <td>Наценка %<input step="any" onkeyup="calculate_price2()" id="two" name="two"
+                                                        class="calc form-control" value="0" type="number"
+                                                        placeholder="От моей цены"></td>
+                                    <td>Цена клиента<input name="three" value="0" onkeyup="calculate_price3()" required
+                                                           id="three" class="calc form-control" type="number"
+                                                           placeholder="Цена клиента"></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <button type="button" id="payment_new" class="btn btn-success"
+                                                style="background-color: var(--primary-color)!important;width: 100%; height:38px;">
+                                            <span style="display:none" id="pay_spinner" class="loader"></span>
+                                            <span id="payment_label">Отправить</span></button>
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </div>
+                    </div>
+
+                </form>
+                <br>
+            </div>
+            <script>
+                function readCssVar(varName) {
+                    varName = varName.startsWith("--") ? varName : "--" + varName;
+                    return window.getComputedStyle(document.documentElement).getPropertyValue(varName);
+                }
+
+                google.charts.load("current", {packages: ["corechart"]});
+                google.charts.setOnLoadCallback(drawChart);
+
+                function drawChart() {
+
+                    var data = google.visualization.arrayToDataTable([
+                        ['Статья расходов', 'Расход в руб.'],
 
                         {% for payment in payments %}
-                        <tr><td>{{payment.name}}</td><td>{{payment.my_price}}</td><td>{{ payment|to_int }}</td><td>{{ payment.client_price}}</td></tr>
-                        {% endfor %}
+                    {%if payment.type_operation != '+' %}
+                    ['{{ payment.name }}', {{payment.my_count}}],
+                    {%endif %}
+                    {%endfor %}
+                ]);
 
-                         <tr><td colspan="4"><div class="card card-body innercard">
-                            Доходы: <br>
-                            Расходы: <br>
-                            Итог по заказу: <br>
-                         </div></td></tr>
-                    </table>
+                    var options = {
+                        pieHole: 0,
+
+                        legend: 'none',
+                        pieSliceText: 'label',
+                        slices: {0: {color: '#00bc8c'}, 1: {color: '#f39c12'}, 2: {color: '#e74c3c'}},
+                        chartArea: {left: 12, top: 0, width: '90%', height: '100%'},
+                        backgroundColor: "#444",
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
+                    chart.draw(data, options);
+
+
+                    document.getElementById('payment_new').addEventListener("click", function () {
+
+                        $.ajax({
+                            type: 'POST',
+                            url: '/create_payment',
+                            data: {
+                                description: $('#description').val(),
+                                my_price: $('#my_price').val(),
+                                options: $('input[name="options"]:checked').val(),
+                                three: $('#three').val(),
+                                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                                action: 'post',
+
+                            },
+                            beforeSend: function () {
+                                $('#pay_spinner').attr('style', 'display:inline');
+                                $('#payment_label').attr('style', 'display:none');
+                            },
+                            success: function (json) {
+                                console.log(json)
+                                $('#pay_spinner').attr('style', 'display:none');
+                                $('#payment_label').attr('style', 'display:inline');
+                                $('#description').val('');
+                                $('#my_price').val('');
+                                $('#one').val('');
+                                $('#two').val('');
+                                $('#three').val('');
+
+
+                                $('#payment_table').append(
+                                    '<tr style="background-color:' + json.color + '"><td class="data_table">' + json.name + '</td><td class="data_table">' + json.my_count + '</td><td class="data_table">' + json.nacenka + '</td><td class="data_table">' + json.client_count + '</td></tr>');
+
+                                data.addRow(
+                                    [json.name, parseInt(json.my_count)]);
+
+                                chart.draw(data, options);
+
+
+                                chart.draw(data, options);
+                            },
+
+                            error: function (xhr, errmsg, err) {
+                                $('#results').html("<div class='alert-box alert radius' data-alert>Oops! We have encountered an error: " + errmsg +
+                                    " <a href='#' class='close'>&times;</a></div>"); // add the error to the dom
+                                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                            }
+
+                        });
+
+                        ;
+                    });
+
+                };
+
+
+
+            </script>
+
+
+            <script>
+
+            </script>
+
+
+            <div class="card card-body innercard" style="padding-top:0px!important;">
+                <div id="donutchart"
+                     style="text-align:center!important;width: 100%; height: 300px; margin-bottom: 0px; margin-top: 0px;"></div>
+
+                <table class="table-striped table table-sm list_table">
+                    Отчет по заказу
+
+                    {% for k, v in order_report.items %}
+                    <tr>
+                        <td id="test"><a class="pay_info" data-toggle="popover" title="Popover Header"
+                                         data-content="Some content inside the popover">{{ k }}</a>:
+                        </td>
+                        <td>{{ v }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if payments %}
+                    <tr>
+                        <td colspan="4">
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
             </div>
-            </div>
-                <a data-toggle="collapse" href="#money" role="button" aria-expanded="false" aria-controls="collapseExample" style="margin-top:5px;" class="btn btn-primary checkbox" name="checkbox">Новый платеж</a><br>
-    <br>
-
-    <div class="collapse" id="money">
-        <form action="/create_payment" method="post" name="cash">
-            {% csrf_token %}
-        <div class="card card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-
-                        <tr><td colspan="3"><div class="btn-group btn-group-toggle" data-toggle="buttons">
-  <label class="btn btn-secondary active">
-    <input type="radio" name="options" onchange="my_function('-')" value="-" id="option1" checked>Расход</label>
-  <label class="btn btn-secondary">
-    <input type="radio" onchange="my_function('+')" name="options" value="+" id="option2">Доход</label>
-  <label class="btn btn-secondary">
-    <input type="radio" onchange="my_function('=')" name="options" value="=" id="option3">Моя работа</label>
-</div>
-<br></td></tr>
-
-                        <tr ><td colspan="3"><p id="title" style="display: inline">Описание</p><input required id="description" name="description" onkeyup="calculate_price0()" class="form-control"  type="text" placeholder="Комментарий расхода"></td></tr>
-                        <tr id="first"><td colspan="3"><p id="count" style="display: inline">Моя цена</p><input required id="my_price" name="my_price" min=0 step="any"  onkeyup="calculate_price0()" class="form-control"  type="number" placeholder="Сколько денег потрачено"></td></tr>
-
-                        <tr id="content_calc"><td >Наценка<input id="one" name="one" step="any" class="form-control calc" value="0" onkeyup="calculate_price1()" type="number" placeholder="Наценка"></td>
-                            <td>Наценка %<input   step="any" onkeyup="calculate_price2()" id="two" name="two" class="calc form-control" value="0"  type="number" placeholder="От моей цены"></td>
-                            <td>Цена клиента<input  name="three" value="0" onkeyup="calculate_price3()" required id="three" class="calc form-control" type="number" placeholder="Цена клиента"></td></tr>
-                        <tr><td colspan="3"> <input type="submit" class="btn btn-success" style="background-color: var(--primary-color)!important;width: 100%"></td></tr>
-                    </table>
-
-            </div>            </div>
-
-          </form>    </div>
+        </div>
     </div>
+    <br>
+</div>
+
+<script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js">$.noConflict(true);</script>
+
 
 
 <script>
 
-    var my_price = document.getElementById('my_price');
-
-            document.querySelectorAll('.calc').forEach(item => { item.addEventListener('focus', event => {
-                if (my_price.value.length==0){
-                my_price.focus();}
-            })})
 
 
+</script>
+<script>
 
-
-
-    function my_function(val){
-    var count = document.getElementById('count');
-    var my_price = document.getElementById('my_price');
-    var content_calc = document.getElementById('content_calc');
-    var description = document.getElementById('description');
-    if (val==='+'){
-        count.innerText = 'Сумма дохода';
-        if (content_calc){
-
-        content_calc.remove();}
-        description.setAttribute('placeholder','Комментарий дохода');
-        my_price.setAttribute('placeholder','Сколько денег получено');
-    }
-    else if(val==='-'){
-        count.innerText = 'Моя цена';
-        my_price.setAttribute('placeholder','Сколько денег потрачено');
-        var newTr = document.createElement("tr");
-        description.setAttribute('placeholder','Комментарий расхода');
-
-        newTr.innerHTML = "<td >Наценка<input id=\"one\"  class=\"form-control calc\" value=\"0\" onkeyup=\"calculate_price1()\" type=\"number\" placeholder=\"Наценка\"></td>\n" +
-            "                            <td>Наценка %<input   onkeyup=\"calculate_price2()\" id=\"two\" class=\"form-control calc\" value=\"0\" type=\"number\" value=\"any\" placeholder=\"От моей цены\"></td>\n" +
-            "                            <td>Цена клиента<input value=\"0\" onkeyup=\"calculate_price3()\" id=\"three\" class=\"form-control calc\" type=\"number\" required placeholder=\"Цена клиента\"></td>";
-        newTr.id = 'content_calc';
-        var first = document.getElementById('first');
-        first.parentNode.insertBefore(newTr, first.nextElementSibling);
-        var my_price = document.getElementById('my_price');
-
-            document.querySelectorAll('.calc').forEach(item => { item.addEventListener('focus', event => {
-                if (my_price.value.length==0){
-                my_price.focus();}
-                })})
-
-    }
-    else if(val==='='){
-                count.innerText = 'Стоимость';
-        if (content_calc){
-        content_calc.remove();}
-        description.setAttribute('placeholder','Описание работы');
-        my_price.setAttribute('placeholder','Стоимость работы');
-
-    }
- }
 </script>
 
+
+
+
 <br><br><br>
 <br><br><br>
 <br><br><br>
-    <script>
-        function truncated(num) {
- return Math.trunc(num * 100) / 100;
-}
-        function calculate_price0() {
-            var three = document.getElementById("three");
-            var one = document.getElementById("one");
-            var two = document.getElementById("two");
-            var my_price = document.getElementById("my_price");
-            one.value = (parseFloat(my_price.value)/100)*parseFloat(two.value);
-            three.value = parseFloat(my_price.value)+parseFloat(one.value);
-
-        }
-        function calculate_price1() {
-            var one = document.getElementById("one");
-            var two = document.getElementById("two");
-            var three = document.getElementById("three");
-            var my_price = document.getElementById("my_price");
-            two.value = parseFloat(one.value)/(parseFloat(my_price.value)/100);
-            three.value = parseFloat(my_price.value)+parseFloat(one.value);
-            // one.value = (parseFloat(my_price.value)/100)*parseFloat(two.value);
-
-        }
-                    function calculate_price2() {
-            var one = document.getElementById("one");
-            var two = document.getElementById("two");
-            var three = document.getElementById("three");
-            var my_price = document.getElementById("my_price");
-            one.value = (parseFloat(my_price.value)/100)*parseFloat(two.value);
-            three.value = parseFloat(my_price.value)+parseFloat(one.value);
-            // two.value = parseFloat(one.value)/(parseFloat(my_price.value)/100);
 
 
-        }
-                    function calculate_price3() {
-            var one = document.getElementById("one");
-            var two = document.getElementById("two");
-            var three = document.getElementById("three");
-            var my_price = document.getElementById("my_price");
-            one.value = parseFloat(three.value)-parseFloat(my_price.value);
-            two.value = parseFloat(one.value)/(parseFloat(my_price.value)/100);
-
-        }
-
-    </script>
-
-    <!--<h3>Изделия</h3>-->
-    <!--<div class="table-responsive">-->
-    <!--<table class="table">-->
-    <!--  <thead>-->
-    <!--    <tr>-->
-    <!--      <th scope="col">Изделие</th>-->
-    <!--    </tr>-->
-    <!--  </thead>-->
-    <!--  <tbody>-->
-
-    <!--  </tbody>-->
-    <!--        <form action="/link_product_to_order" method="post" style="display: inline">-->
-    <!--        {% csrf_token %}-->
-
-    <!--      {% if products %}-->
-    <!--          <tr><td><select name="product" class="form-control" required>-->
-    <!--              <option value="" disabled selected hidden>Выбрать</option>-->
-    <!--                      {% for product in products %}-->
-
-    <!--            <option>{{ product.name }}</option>-->
-    <!--              {% endfor %}-->
-    <!--        </select></td></tr>-->
-    <!--          <tr><td><button type="submit" name="save" value="save" class="btn btn-success">Сохранить</button>-->
-    <!--              <input type="hidden" name="order" value="{{ order.id }}">-->
-
-    <!--              <a href="/create_product" name="create" value="create" class="btn btn-warning">Создать</a></td></tr>-->
 
 
-    <!--  {% else %}-->
-    <!--  <tr><td>Изделий нет...</td></tr>-->
-    <!--<tr><td>-->
-    <!--              <a href="/create_product" name="create" value="create" class="btn btn-warning">Создать</a></td></tr>-->
-
-    <!--  {% endif %}-->
-    <!--                </form>-->
-
-    <!--</table>-->
-    <!--</div>-->
-    <!--    <br>-->
-
-    <!--<h2>Клиенты</h2>-->
-    <!--<div class="table-responsive">-->
-    <!--<table class="table">-->
-    <!--  <thead>-->
-    <!--    <tr>-->
-    <!--      <th scope="col">Клиент</th>-->
-    <!--    </tr>-->
-    <!--  </thead>-->
-    <!--  <tbody>-->
-    <!--  {% if clients %}-->
-    <!--      <tr><td>-->
-    <!--          <select class="form-control" id="exampleFormControlSelect1">-->
-    <!--                            <option>Выбрать</option>-->
-
-    <!--                      {% for client in clients %}-->
-
-    <!--            <option>{{ client }}</option>-->
-    <!--              {% endfor %}-->
-    <!--        </select>-->
-    <!--    </td></tr>-->
 
 
-    <!--    <tr>-->
-    <!--      <td style="word-wrap: break-word;">Иванов Иван Иванович</td>-->
-    <!--    </tr>-->
-    <!--    <tr>-->
-    <!--      <td style="word-wrap: break-word;">Иванова Светлана Ивановна</td>-->
-    <!--    </tr>-->
-    <!--  {% else %}-->
-    <!--  <tr><td>Клиентов нет...</td></tr>-->
-    <!--  {% endif %}-->
-    <!--  </tbody>-->
-    <!--</table>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous">$.noConflict(true);
 
-    <!--    <form style="display: inline">-->
-    <!--        {% csrf_token %}-->
-    <!--        <button type="button" class="btn btn-success">Сохранить</button>-->
-    <!--    </form>-->
-    <!--    <form action="/create_client" method="get" style="display: inline">-->
-    <!--        {% csrf_token %}-->
-    <!--        <button type="submit" class="btn btn-warning">Создать</button>-->
-    <!--    </form>-->
-    <!--</div>-->
+</script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
 
 
-    <!--</div>-->
-    <!--<br>-->
-
-        <script>
-            var element = document.getElementById('table-scroll-vertical');
-            element.scrollTop = element.scrollHeight;
-        </script>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
-            integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-            crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-            crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-            crossorigin="anonymous"></script>
 {% endblock %}
