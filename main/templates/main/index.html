@@ -89,8 +89,34 @@ background-color:var(--focus_button)!important;
                                             </tr>
                                             <tr>
                                                 <td class="align-middle" colspan="2">Длительность:<br>100 дней</td>
-                                                <td class="align-middle"><a class="" client_id="{{client.id}}" href="tel:{{ client.phone }}"><span
-                                        style="background-color:var(--background-form); color: var(--secondary-color);" class="btn btn-primary">📞 Андрей</span></a></td>
+                                                {% if i.client_set.all|length > 1 %}
+                                                <td class="align-middle">
+                                                    <div class="btn-group">
+                                                        <a class="" client_id="{{client.id}}" style="color:var(--secondary-color)"
+                                                           href="tel:{{ i.get_first_client.phone }}">
+                                                            <button type="button" class="btn btn-secondary">📞 {{i.get_first_client.get_label }}
+                                                            </button>
+                                                        </a>
+                                                        <button type="button"
+                                                                class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+                                                                data-toggle="dropdown" aria-haspopup="true"
+                                                                aria-expanded="false">
+
+                                                        </button>
+                                                        <div class="dropdown-menu" style="background-color: var(--bg-color); color: var(--secondary-color); position: absolute; transform: translate3d(-188px, 0px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                            {% for c in i.client_set.all %}
+
+                                                            <a class="dropdown-item" style="color:var(--secondary-color)" href="tel:{{ c.phone }}">
+                                                                📞 {{c.get_label }}</a>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {% elif i.client_set.all|length == 1 %}
+                                                <td class="align-middle"><a class="" client_id="{{client.id}}" href="tel:{{ i.get_first_client.phone }}"><span style="background-color:var(--background-form); color: var(--secondary-color);" class="btn btn-primary">📞 {{ i.get_first_client.get_label }}</span></a></td>
+                                                {% else %}
+                                                {% endif %}
                                                 <td class="align-middle" colspan="2">Остаток: {{ all_ostatok|get_ostatok:i.id}}<br></td>
 
                                             </tr>

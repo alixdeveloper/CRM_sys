@@ -17,6 +17,11 @@ class Order(models.Model):
     def __str__(self):
         return f'Заказ {self.id} от {self.create_date}'
 
+    def get_first_client(self):
+        client = self.client_set.first()
+        return client
+
+
     def sum_weight_product(self):
         products = self.product_set.all()
         result = float(0)
@@ -96,6 +101,9 @@ class Client(models.Model):
 
     def __str__(self):
         return f'{self.first_name} {self.last_name} {self.middle_name}'
+
+    def get_label(self):
+        return self.first_name or self.last_name or self.middle_name
 
 
 
