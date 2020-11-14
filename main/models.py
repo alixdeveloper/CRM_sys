@@ -17,6 +17,16 @@ class Order(models.Model):
     def __str__(self):
         return f'Заказ {self.id} от {self.create_date}'
 
+    def sum_weight_product(self):
+        products = self.product_set.all()
+        result = float(0)
+        if products:
+            for product in products:
+                result += product.weight
+        return result
+
+
+
     def payments_result(self):
         payments = self.payment_set.all()
         order_table = list()
@@ -92,6 +102,7 @@ class Client(models.Model):
 class Product(models.Model):
     """Many-to-one relationships"""
     name = models.CharField(max_length=255)
+    create_date = models.DateTimeField('дата завершения заказа', default=timezone.now)
     complete_date = models.DateTimeField('дата завершения заказа', default=timezone.now)
     preorder_weight = models.DecimalField(max_digits=65, decimal_places=2, default=Decimal(0))
     category = models.CharField(max_length=255, default='')

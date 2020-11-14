@@ -112,7 +112,7 @@ def order(request, order_id):
                                                'products': products, 'theme':request.session.get('theme','light'),
                                                'order_table': payments_result['order_table'], 'order_report':payments_result['order_report'],
                                                'ProductCategory': ProductCategory.objects.all(),
-                                               'comments_product':comments_product,
+                                               'comments_product': comments_product,
                                                })
 
 
@@ -134,7 +134,7 @@ def change_order_info(request):
     _order.name = request.POST['name']
     _order.create_date = datetime.strptime(request.POST['create_date'], "%Y-%m-%d")
     # _order.complete_date = datetime.strptime(request.POST['complete_date'], "%Y-%m-%d")
-    _order.weight = round(Decimal(request.POST['weight']),2)
+    # _order.weight = round(Decimal(request.POST['weight']),2)
     # _order.preorder_weight = round(Decimal(request.POST['preorder_weight']),2)
     # _order.price = round(Decimal(request.POST['price']),2)
     # _order.prepayment = round(Decimal(request.POST['prepayment']),2)
@@ -168,7 +168,7 @@ def change_product_info(request):
     product.category = request.POST['category']
     product.complete_date = datetime.strptime(request.POST['complete_date'], "%Y-%m-%d")
     product.height = request.POST['height']
-    product.preorder_weight_product = request.POST['preorder_weight_product']
+    product.preorder_weight = request.POST['preorder_weight_product']
     product.width = request.POST['width']
     product.length = request.POST['length']
     product.weight = request.POST['weight']

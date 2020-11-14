@@ -48,11 +48,11 @@
 <!--            Дата завершения-->
 <!--            <input class="form-control date order-data" content="Дата завершения" name="complete_date" type="date"-->
 <!--                   value="{{ order.complete_date|timezone:'Europe/Moscow'|parse_iso }}"><br>-->
-            Примерный вес
+            Общий вес изделий
             <input class="form-control order-data" id="weight" content="Примерный вес" name="weight" type="number"
                    placeholder="Числом"
-                   value="{{ order.weight }}"
-            ><br>
+                   value="{{ order.sum_weight_product }}">
+            <br>
 <!--            Примерная стоимость-->
 <!--            <input class="form-control order-data" name="price" type="number" content="Примерная стоимость"-->
 <!--                   placeholder="Числом" value="{{ order.price }}"-->
@@ -69,8 +69,8 @@
             <br>
     <div class="btn-group-vertical">
 
-        <a href="/create_product" name="create" value="create" class="btn btn-secondary">Добавить изделие</a></td></tr>
         <a href="/create_client" name="create" value="create" class="btn btn-secondary">Добавить клиента</a></td></tr>
+        <a href="/create_product" name="create" value="create" class="btn btn-secondary">Добавить изделие</a></td></tr>
     </div>
             <br>
             <br>
@@ -191,8 +191,7 @@
                            placeholder="Текст">
                     Дата завершения
             <input class="form-control date product-data" product_id = "{{ product.id }}" content="Дата завершения" name="complete_date_product_{{ product.id }}" type="date"
-                   value="{{ product.complete_date|timezone:'Europe/Moscow'|parse_iso }}"
-            >
+                   value="{{ product.complete_date|timezone:'Europe/Moscow'|parse_iso }}">
                     Категория изделия
                     <select class="form-control product-data sel" value="{{product.category}}" label="Категория изделия" product_id="{{ product.id }}" name="category_{{ product.id }}" data-live-search="true">
                           <option selected value="{{ product.category }}">{{ product.category }}</option>
@@ -360,17 +359,17 @@
 
 
 
-                <script>
-        function truncated(num) {
- return Math.trunc(num * 100) / 100;
-}
-        function calculate() {
-            var weight = document.getElementById("preorder_weight");
-            var preorder_weight_result = document.getElementById("preorder_weight_result");
-            preorder_weight_result.value = truncated(parseFloat(weight.value)-parseFloat(weight.value)/10);
-        }
-        calculate();
-    </script>
+<!--                <script>-->
+<!--        function truncated(num) {-->
+<!-- return Math.trunc(num * 100) / 100;-->
+<!--}-->
+<!--        function calculate() {-->
+<!--            var weight = document.getElementById("preorder_weight");-->
+<!--            var preorder_weight_result = document.getElementById("preorder_weight_result");-->
+<!--            preorder_weight_result.value = truncated(parseFloat(weight.value)-parseFloat(weight.value)/10);-->
+<!--        }-->
+<!--        calculate();-->
+<!--    </script>-->
 
 <script>
 
@@ -785,7 +784,7 @@
     <br>
 </div>
 
-<script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js">$.noConflict(true);</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js">$.noConflict(true);</script>
 
 
 
@@ -818,6 +817,5 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
-
 
 {% endblock %}
