@@ -11,6 +11,8 @@
     {% csrf_token %}
 Название
     <input class="form-control" name="name" type="text" placeholder="Текст" required>
+Дата приема
+    <input class="form-control date order-data" content="Дата приема заказа" name="create_date" type="date" required>
 Дата завершения
     <input class="form-control date" required name="complete_date" type="date"><br>
 Категория изделия
@@ -36,6 +38,25 @@
             preorder_weight_result.value = truncated(parseFloat(weight.value)-parseFloat(weight.value)/10);
         }
     </script>
+        <script>
+        var date = new Date();
+
+var day = date.getDate();
+var month = date.getMonth() + 1;
+var year = date.getFullYear();
+
+if (month < 10) month = "0" + month;
+if (day < 10) day = "0" + day;
+
+var today = year + "-" + month + "-" + day;
+var x = document.getElementsByClassName("date");
+var i;
+for (i = 0; i < x.length; i++) {
+  x[i].value = today;
+}
+
+</script>
+
     <script>
     var select = document.querySelector('#sel')
     var new_category = document.querySelector('#new_category');

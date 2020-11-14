@@ -1,0 +1,9 @@
+from django.template import Library
+import datetime
+
+register = Library()
+
+
+@register.filter(expects_localtime=True)
+def get_ostatok(all_ostatok, id):
+    return all_ostatok[id-1]

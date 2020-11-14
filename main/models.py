@@ -26,7 +26,6 @@ class Order(models.Model):
         return result
 
 
-
     def payments_result(self):
         payments = self.payment_set.all()
         order_table = list()
@@ -77,11 +76,11 @@ class Order(models.Model):
 
         for k,v in order_report.items():
             if k in ['Доход','Затраты','Прибыль','Прибыль в день', 'Стоимость для клиента','Моя работа','Наценка','Остаток']:
-                order_report[k] =str(order_report[k])+' ₽'
+                order_report[k] =str(order_report[k])+'\xa0₽'
             if k in ['Прибыль в %']:
-                order_report[k] = str(order_report[k]) + ' %'
+                order_report[k] = str(order_report[k]) + '\xa0%'
             if k in ['Длительность']:
-                order_report[k] = str(order_report[k]) + ' дней'
+                order_report[k] = str(order_report[k]) + '\xa0дней'
         return {'order_table': order_table, 'order_report': order_report}
 
 
@@ -97,6 +96,34 @@ class Client(models.Model):
 
     def __str__(self):
         return f'{self.first_name} {self.last_name} {self.middle_name}'
+
+
+
+class ProductCategory(models.Model):
+    name = models.CharField(max_length=255)
+
+
+class Comment(models.Model):
+    message = models.CharField(max_length=255, default="")
+    date = models.DateTimeField()
+    orders = models.ManyToManyField(Order)
+    comment_type = models.CharField(max_length=255,default='comment')
+    label = models.CharField(max_length=255,default="")
+    prev = models.CharField(max_length=255, default="")
+    new = models.CharField(max_length=255, default="")
+    place = models.CharField(max_length=255, default="")
+    identification = models.CharField(max_length=255, default="")
+
+class Payment(models.Model):
+    name = models.CharField(max_length=255)
+    my_count = models.DecimalField(max_digits=65, decimal_places=2)
+    client_count = models.DecimalField(max_digits=65, decimal_places=2)
+    type_operation = models.CharField(max_length=25)
+    orders = models.ManyToManyField(Order)
+
+
+
+
 
 
 class Product(models.Model):
@@ -116,33 +143,6 @@ class Product(models.Model):
     size = models.FloatField(default=0)
     photo = models.CharField(max_length=255)
     orders = models.ManyToManyField(Order)
-
+    comments = models.ManyToManyField(Comment)
     def __str__(self):
         return f'Изделие "{self.name}" связано с {len(self.orders.all())} заказами'
-
-
-class ProductCategory(models.Model):
-    name = models.CharField(max_length=255)
-
-
-class Comment(models.Model):
-    message = models.CharField(max_length=255, default="")
-    date = models.DateTimeField()
-    orders = models.ManyToManyField(Order)
-    comment_type = models.CharField(max_length=255,default='comment')
-    prev = models.CharField(max_length=255, default="")
-    new = models.CharField(max_length=255, default="")
-    place = models.CharField(max_length=255, default="")
-    identification = models.CharField(max_length=255, default="")
-
-class Payment(models.Model):
-    name = models.CharField(max_length=255)
-    my_count = models.DecimalField(max_digits=65, decimal_places=2)
-    client_count = models.DecimalField(max_digits=65, decimal_places=2)
-    type_operation = models.CharField(max_length=25)
-    orders = models.ManyToManyField(Order)
-
-
-
-
-

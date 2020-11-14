@@ -86,7 +86,7 @@
                 {%elif client.middle_name %}{{client.middle_name}} (id {{client.id}}){% else %}Ошибка! Нет имени!{% endif %}</h4>
         </a>
 
-        <div class="collapse" client_id="{{client.id}}" id="client{{client.id}}">
+        <div class="collapse"  client_id="{{client.id}}" id="client{{client.id}}">
             <div class="card card-body">
 
                 <div class="container">
@@ -121,7 +121,7 @@
                     Удобный способ связи
                     {% if client.communication_type %}
 
-                    <select label="Удобный способ связи" client_id="{{client.id}}" class="form-control client-data"
+                    <select label="Удобный способ связи" content="Удобный способ связи" client_id="{{client.id}}" class="form-control client-data"
                             value="{{ client.communication_type }}" id="communication_type" name="communication_type"
                             data-live-search="true">
                         <option value="{{ client.communication_type }}" selected>{{ client.communication_type }}
@@ -162,9 +162,11 @@
         <h2>Изделия</h2>
         {% for product in products %}
         {% if order in product|get_orders_of_product %}
+        <a name="product{{product.id}}"></a>
         <table class="table" >
         <tr><td style="padding: 0; vertical-align: middle!important;"><a data-toggle="collapse" class="clickcollapse" href="#product{{product.id}}" role="button" aria-expanded="false"
            aria-controls="collapseExample">
+
             <h4>{{ product.name }}  (id {{product.id}})</h4>
         </a></td><td style="text-align: right">
         <button type="button" class="btn btn-secondary dropdown-toggle" id="button{{product.id}}" data-toggle="dropdown" style="color:var(--secondary-color)">{{product.status}}</button>
@@ -189,6 +191,9 @@
                     Название
                     <input class="form-control product-data" label="Название" product_id="{{ product.id }}" name="product_name_{{ product.id }}" type="text" value="{{ product.name }}"
                            placeholder="Текст">
+                    Дата приема
+            <input class="form-control date product-data" product_id = "{{ product.id }}" content="Дата приема" name="create_date_product_{{ product.id }}" type="date" value="{{ product.create_date|timezone:'Europe/Moscow'|parse_iso }}" required>
+
                     Дата завершения
             <input class="form-control date product-data" product_id = "{{ product.id }}" content="Дата завершения" name="complete_date_product_{{ product.id }}" type="date"
                    value="{{ product.complete_date|timezone:'Europe/Moscow'|parse_iso }}">
@@ -283,7 +288,7 @@
                     </style>
                     <tbody id="data_of_comments_product{{product.id}}">
                     {% if comments_product %}
-                    {% for message in comments_product %}
+                    {% for message in product.comments.all %}
                     {% if message.comment_type != 'product' and message.comment_type|to_str == product.id|to_str %}
                                         <tr id="{{ message.id }}">
                         <th scope="row">{{ message.date|timezone:"Europe/Moscow"|parse_iso_order }}</th>
@@ -299,7 +304,7 @@
 
                         <td style="word-wrap: break-word;">
                             <a style="color:var(--secondary-color)"
-                                                              data-toggle="collapse" href="#product{{ message.id }}"
+                                                              data-toggle="collapse" href="#product_message{{ message.id }}"
                                                               role=""
                                                               aria-expanded="false" aria-controls="collapseExample"
                                                               style="margin-top:5px;" class="" name="checkbox">Изменение
@@ -312,10 +317,14 @@
 
                     <tr>
                         <td colspan="2" style="padding:0;">
-                            <div class="collapse" id="product{{ message.id }}">
+                            <div class="collapse" id="product_message{{ message.id }}">
                                 <div class="card card-body" style="padding: 0;padding-bottom:5px; border-radius:0; border:none;">
                                     <div class="table-responsive">
                                         <table style="background-color: transparent;" class="table table-sm">
+                                            <tr>
+                                                <td>Что меняли</td>
+                                                <td>{{ message.label }}</td>
+                                            </tr>
                                             <tr>
                                                 <td>Было</td>
                                                 <td>{{ message.prev }}</td>
@@ -438,6 +447,11 @@
                                 <div class="card card-body" style="padding: 0;padding-bottom:5px; border-radius:0; border:none;">
                                     <div class="table-responsive">
                                         <table style="background-color: transparent;" class="table table-sm">
+                                                                                        <tr>
+                                                <td>Что меняли</td>
+                                                <td>{{ message.label }}</td>
+                                            </tr>
+
                                             <tr>
                                                 <td>Было</td>
                                                 <td>{{ message.prev }}</td>
@@ -446,10 +460,10 @@
                                                 <td>Стало</td>
                                                 <td>{{ message.new }}</td>
                                             </tr>
-                                            <tr>
-                                                <td>ID</td>
-                                                <td>{{ message.identification }}</td>
-                                            </tr>
+<!--                                            <tr>-->
+<!--                                                <td>ID</td>-->
+<!--                                                <td>{{ message.identification }}</td>-->
+<!--                                            </tr>-->
                                         </table>
                                     </div>
 
@@ -481,6 +495,11 @@
                                 <div class="card card-body" style="padding: 0;padding-bottom:5px; border-radius:0; border:none;">
                                     <div class="table-responsive">
                                         <table style="background-color: transparent;" class="table table-sm">
+                                                                                        <tr>
+                                                <td>Что меняли</td>
+                                                <td>{{ message.label }}</td>
+                                            </tr>
+
                                             <tr>
                                                 <td>Было</td>
                                                 <td>{{ message.prev }}</td>
@@ -807,11 +826,24 @@
 
 
 
-
+    <script>
+        function truncated(num) {
+ return Math.trunc(num * 100) / 100;
+}
+        function calculate() {
+            var weight = document.getElementById("preorder_weight");
+            var preorder_weight_result = document.getElementById("preorder_weight_result");
+            preorder_weight_result.value = truncated(parseFloat(weight.value)-parseFloat(weight.value)/10);
+        }
+        calculate()
+    </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
         integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
         crossorigin="anonymous">$.noConflict(true);
+
+</script>
+<script>
 
 </script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"

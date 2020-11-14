@@ -2,6 +2,9 @@
 
 {% block content %}
 {% load parse_iso_days %}
+{% load tz %}
+{% load parse_iso %}
+{% load get_ostatok %}
 
 
 <style>.table, td, th {
@@ -33,13 +36,18 @@ background-color:var(--focus_button)!important;
 
 </style>
   {% for i in orders %}
-    <tr>
-      <th class="align-middle" scope="row" style="padding: 0">{{ i.id }}</th>
-        <td class="align-middle" style="padding: 0"><a href="/order/{{ i.id }}">{{ i.name }}</a></td>
-      <td class="align-middle">{{ i.complete_date|timeuntil }} <br>из {{ i|parse_iso_days}} дней</td>
-      <td class="align-middle" style="padding: 0; padding-right: 4px;">
-    <div class="btn-group dropleft">
-        <button type="button" class="btn btn-secondary dropdown-toggle" id="button{{i.id}}" data-toggle="dropdown" style="color:var(--secondary-color);font-size: 0.8em">{% if i.status == 'Ожидание предоплаты'%}Ожидание<br>предоплаты{%else%}{{ i.status }}{%endif%}</button>
+    <tr  id="{{ i.id }}">
+                        <th class="align-middle" scope="row">{{ i.id }}</th>
+
+                        <td class="align-middle" style="word-wrap: break-word;">
+                            <a href="/order/{{ i.id }}">{{ i.name }}</a></td>
+                        <td class="align-middle"><a style="color:var(--secondary-color)"
+                                                              data-toggle="collapse" href="#product{{ i.id }}"
+                                                              role=""
+                                                              aria-expanded="false" aria-controls="collapseExample"
+                               style="margin-top:5px;" class="" name="checkbox">{{ i.complete_date|timeuntil }} <br>из {{ i|parse_iso_days}} дней</a></td>
+                        <td>    <div class="btn-group dropleft">
+        <button type="button" class="btn btn-secondary dropdown-toggle" id="button{{i.id}}" data-toggle="dropdown" style="padding-left:3px;padding-right:3px;margin-left:0;margin-right:0;color:var(--secondary-color);font-size: 0.7em">{% if i.status == 'Ожидание предоплаты'%}Ожидание<br>предоплаты{%else%}{{ i.status }}{%endif%}</button>
         <div class="dropdown-menu" style="background-color:var(--bg-color);color:var(--secondary-color);">
             <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">Создан</a>
             <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">Согласование</a>
@@ -50,8 +58,51 @@ background-color:var(--focus_button)!important;
             <a href="#" status="{{i.status}}" order_id="{{i.id}}" style="color:var(--secondary-color)" class="dropdown-item">Завершен</a>
         </div>
     </div>
+    </td>
+                    </tr>
+                    <tr>
+                        <td class="align-middle" colspan="4" style="padding:0;">
+                            <div class="collapse" id="product{{ i.id }}">
+                                <div class="card card-body" style="padding: 0;padding-bottom:5px; border-radius:0; border:none;">
+                                    <div class="table-responsive">
+                                        <table style="background-color: transparent;" class="table table-sm">
+                                            {% if i.product_set.all %}
+                                            <tr style="border-top: 2px solid #1d1d1d; background-color: var(--background-secondary)">
+                                                <th class="align-middle" colspan="4">Информация об изделиях</th>
+                                            </tr>
+                                            <tr>
+                                                <th class="align-middle" colspan="2">Изделие</th>
+                                                <th class="align-middle">Дата завершения</th>
+                                                <th class="align-middle">Состояние</th>
+                                            </tr>
+                                            {% for product in i.product_set.all %}
+                                            <tr>
+                                                <td class="align-middle" colspan="2"><a href="order/{{i.id }}?product={{product.id}}">{{ product.name }}</a></td>
+                                                <td class="align-middle">{{ product.complete_date|timezone:'Europe/Moscow' }}</td>
 </td>
-    </tr>
+                                                <td class="align-middle">{{ product.status }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                            {% endif %}
+                                            <tr style="border-top: 2px solid #1d1d1d; background-color: var(--background-secondary);">
+                                                <th class="align-middle" colspan="4">Информация о заказе</th>
+                                            </tr>
+                                            <tr>
+                                                <td class="align-middle" colspan="2">Длительность:<br>100 дней</td>
+                                                <td class="align-middle"><a class="" client_id="{{client.id}}" href="tel:{{ client.phone }}"><span
+                                        style="background-color:var(--background-form); color: var(--secondary-color);" class="btn btn-primary">📞 Андрей</span></a></td>
+                                                <td class="align-middle" colspan="2">Остаток: {{ all_ostatok|get_ostatok:i.id}}<br></td>
+
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+
   {% endfor %}
   </tbody>
 </table>
@@ -98,6 +149,7 @@ background-color:var(--focus_button)!important;
         })
 
 </script>
+<style>tbody .align-middle{font-size: 0.8rem}</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 {% endblock %}

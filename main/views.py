@@ -17,7 +17,7 @@ import hmac
 from datetime import datetime
 import json
 
-def new_comment(request,comment_type, prev, new, place, identification ):
+def new_comment(request,comment_type, prev, new, place, identification, label, product=0):
     timezone.activate(pytz.timezone("Europe/Moscow"))
     date = timezone.now()
     order_id = request.session['last_order']
@@ -25,10 +25,14 @@ def new_comment(request,comment_type, prev, new, place, identification ):
     comment = Comment(date=date,
                       comment_type=comment_type,
                       prev=prev, new=new,
-                      place=place, identification=identification)
+                      place=place, identification=identification,
+                      label=label)
     comment.save()
     comment.orders.add(_order)
     comment.save()
+    if product:
+        product.comments.add(comment)
+        product.save()
 
 
 def check_signature(token: str, hash: str, **kwargs) -> bool:
@@ -62,7 +66,9 @@ def index(request):
     if not request.session.get('login', False):
         return HttpResponseRedirect('/login')
     orders = Order.objects.all()
-    return render(request, 'main/index.html', {'orders':orders, 'theme':request.session.get('theme','light')})
+    all_ostatok = [x.payments_result()['order_report']['Остаток'] for x in orders]
+    return render(request, 'main/index.html', {'orders':orders, 'theme':request.session.get('theme','light'),
+                                               'all_ostatok':all_ostatok})
 
 
 def create_comment_order(request):
@@ -87,7 +93,10 @@ def create_comment_product(request):
         comment_type = request.POST['product_id']
         date = timezone.now()
         comment = Comment(message=message, date=date, comment_type=comment_type)
+        product = get_object_or_404(Product, pk=comment_type)
         comment.save()
+        product.comments.add(comment)
+        product.save()
         comment.orders.add(_order)
         comment.save()
         timezone.activate(pytz.timezone("Europe/Moscow"))
@@ -141,7 +150,7 @@ def change_order_info(request):
     # _order.status = request.POST['status']
     _order.ads = request.POST['ads']
     _order.save()
-    new_comment(request, 'info', request.POST['prev'], request.POST['new'], request.POST['place'], request.POST['identification'])
+    new_comment(request, 'info', request.POST['prev'], request.POST['new'], request.POST['place'], request.POST['identification'], request.POST['label'])
     return JsonResponse({'_order.name': str(_order.create_date)})
 
 
@@ -156,7 +165,7 @@ def change_client_info(request):
     client.city = request.POST['city']
     client.communication_type = request.POST['communication_type']
     client.save()
-    new_comment(request, 'client', request.POST['prev'], request.POST['new'], request.POST['place'], request.POST['identification'])
+    new_comment(request, 'client', request.POST['prev'], request.POST['new'], request.POST['place'], request.POST['identification'], request.POST['label'])
     return JsonResponse({})
 
 
@@ -166,6 +175,7 @@ def change_product_info(request):
     product = _order.product_set.get(id=request.POST['product_id'])
     product.size = request.POST['psize']
     product.category = request.POST['category']
+    product.create_date = datetime.strptime(request.POST['create_date'], "%Y-%m-%d")
     product.complete_date = datetime.strptime(request.POST['complete_date'], "%Y-%m-%d")
     product.height = request.POST['height']
     product.preorder_weight = request.POST['preorder_weight_product']
@@ -176,7 +186,7 @@ def change_product_info(request):
     product.material = request.POST['material']
     product.name = request.POST['name']
     product.save()
-    new_comment(request, 'product', request.POST['prev'], request.POST['new'], request.POST['place'], request.POST['identification'])
+    new_comment(request, 'product', request.POST['prev'], request.POST['new'], request.POST['place'], request.POST['identification'], request.POST['label'], product=product)
     return JsonResponse({})
 
 
@@ -336,6 +346,7 @@ def create_product(request):
     # return HttpResponse(f'{os.path.dirname(os.path.realpath(__file__))}/static/main/uploads/image/')
     if request.method == 'POST':
         name = request.POST['name']
+        create_date = parse_date(request.POST['create_date'])
         complete_date= parse_date(request.POST['complete_date'])
         category = request.POST['category']
         new_category = request.POST['new_category']
@@ -366,7 +377,7 @@ def create_product(request):
         else:
             photo_name = ''
         last_order = request.session['last_order']
-        product = Product(name=name,complete_date=complete_date, category=category, preorder_weight=preorder_weight,material=material,color=color,weight=weight,
+        product = Product(name=name,complete_date=complete_date, create_date=create_date, category=category, preorder_weight=preorder_weight,material=material,color=color,weight=weight,
                           length=length,width=width,height=height,size=size,photo=json.dumps(photo_list))
         product.save()
         product.orders.add(Order.objects.get(id=last_order))
@@ -379,7 +390,7 @@ def create_product(request):
 
 def login(request):
 
-    request.session['login'] = True
+    # request.session['login'] = True
 
     username = request.GET.get('username', None)
     data = {k: str(request.GET[k]) for k in request.GET}
