@@ -190,10 +190,10 @@
                     <input class="form-control product-data" label="Название" product_id="{{ product.id }}" name="product_name_{{ product.id }}" type="text" value="{{ product.name }}"
                            placeholder="Текст">
                     Дата приема
-            <input class="form-control date product-data" product_id = "{{ product.id }}" content="Дата приема" name="create_date_product_{{ product.id }}" type="date" value="{{ product.create_date|timezone:'Europe/Moscow'|parse_iso }}" required>
+            <input class="form-control date product-data" label="Дата приема" product_id = "{{ product.id }}" content="Дата приема" name="create_date_product_{{ product.id }}" type="date" value="{{ product.create_date|timezone:'Europe/Moscow'|parse_iso }}" required>
 
                     Дата завершения
-            <input class="form-control date product-data" product_id = "{{ product.id }}" content="Дата завершения" name="complete_date_product_{{ product.id }}" type="date"
+            <input class="form-control date product-data" label="Дата завершения" product_id = "{{ product.id }}" content="Дата завершения" name="complete_date_product_{{ product.id }}" type="date"
                    value="{{ product.complete_date|timezone:'Europe/Moscow'|parse_iso }}">
                     Категория изделия
                     <select class="form-control product-data sel" value="{{product.category}}" label="Категория изделия" product_id="{{ product.id }}" name="category_{{ product.id }}" data-live-search="true">

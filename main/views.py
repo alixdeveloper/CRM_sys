@@ -27,7 +27,7 @@ def new_comment(request,comment_type, prev, new, place, identification, label, p
     comment = Comment(date=date,
                       comment_type=comment_type,
                       place=place, identification=identification,
-                      label=label)
+                      label=label, prev=prev, new=new)
     comment.save()
     comment.orders.add(_order)
     comment.save()
@@ -486,9 +486,25 @@ def search(request):
     if not request.session.get('login', False):
         return HttpResponseRedirect('/login')
     data = request.POST.get('data','')
-    raw_orders = Order.objects.all()
-    orders = []
-    for i in raw_orders:
-        if data.lower() in i.name.lower():
-            orders.append(i)
-    return render(request, 'main/index.html', {'orders':orders, 'theme':request.session.get('theme','light')})
+    orders = Order.objects.filter(name__contains=data)
+    clients1 = Client.objects.filter(first_name__contains=data)
+    clients2 = Client.objects.filter(last_name__contains=data)
+    clients3 = Client.objects.filter(middle_name__contains=data)
+    products = Product.objects.filter(name__contains=data)
+    comments = Comment.objects.filter(message__contains=data)
+    search_result = [i for i in clients1]
+    search_result += [i for i in clients2]
+    search_result += [i for i in clients3]
+    search_result += [i for i in products]
+    search_result += [i for i in comments]
+    search_result += [i for i in orders]
+    search_result = [i.orders.all() for i in search_result]
+    search_result_final = []
+    for i in search_result:
+        for x in i:
+            search_result_final.append(x)
+    search_result_final =set(search_result_final)
+    # search_result = set(search_result)
+    all_ostatok = [x.payments_result()['order_report']['Остаток'] for x in search_result_final]
+
+    return render(request, 'main/index.html', {'orders': search_result_final, 'all_ostatok': all_ostatok, 'theme': request.session.get('theme','light')})
