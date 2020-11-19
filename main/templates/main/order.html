@@ -34,7 +34,6 @@
 </nav>
 
 <div class="container">
-    <form action="/order/{{ order.id }}/" method="post">
         {% csrf_token %}
         <div class="card card-body" style="margin-top: 10px;">
 
@@ -186,7 +185,6 @@
             <div class="card card-body">
 
                 <div class="container">
-                                        <form action="create_product" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     Название
                     <input class="form-control product-data" label="Название" product_id="{{ product.id }}" name="product_name_{{ product.id }}" type="text" value="{{ product.name }}"
@@ -241,32 +239,32 @@
                     {% if product.photo%}
                     {% for photo in product|get_product_photos %}
                     <br>
-                    <img style="border-radius: 3px" label="" product_id="{{ product.id }}" src="{% static 'uploads/image/'%}{{ photo }}"
-                         class="img-fluid" alt="Responsive image">
+                    <img style="border-radius: 3px" label="" product_id="{{ product.id }}" filename="{{photo}}" src="{% static 'main/uploads/image/'%}{{ photo }}"
+                         class="img-fluid product-image" alt="Responsive image">
                     {% endfor %}
-                    {% else %}
+                    {% endif %}
                     Фото
+                <form action="/upload_photo" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" value="{{ product.id }}" name="data_id">
+                    <input type="hidden" value="photo" name="data_type">
                     <div class="custom-file">
-                        <input type="file" class="custom-file-input" name="photo_{{ product.id }}" id="customFile">
+                        <input multiple type="file" class="custom-file-input" data_id="{{ product.id }}" name="photo" id="customFile">
                         <label class="custom-file-label" id='label' for="customFile">Загрузка фото</label>
                     </div>
 
                         <br><br><button type="submit" class="btn btn-primary">Сохранить</button>
+                </form>
 
 
 
-                                        </form>
 
 
-                </div>
 
-        </div>
-        {% endif %}
         {% endif %}
 
                         </div>
 
-    </form>
 </div>
                     <h2>Комментарии изделия {{ product.name }}</h2>
 
@@ -738,8 +736,12 @@
                                 $('#one').val('');
                                 $('#two').val('');
                                 $('#three').val('');
+                                {% if not payment %}
+                                if (!$('#payment_table .data_table').length) {
 
-
+                                    $('#payment_table').prepend('<tr class="title-name"><td>Действие</td><td>₽ мои</td><td>Наценка</td><td>₽&#160;клиента</td></tr>');
+                                }
+                                {% endif %}
                                 $('#payment_table').append(
                                     '<tr style="background-color:' + json.color + '"><td class="data_table">' + json.name + '</td><td class="data_table">' + json.my_count + '</td><td class="data_table">' + json.nacenka + '</td><td class="data_table">' + json.client_count + '</td></tr>');
 
@@ -750,6 +752,7 @@
 
 
                                 chart.draw(data, options);
+
                             },
 
                             error: function (xhr, errmsg, err) {

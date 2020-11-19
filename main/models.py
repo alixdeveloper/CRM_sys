@@ -1,6 +1,7 @@
 from django.db import models
 from decimal import Decimal
 from django.utils import timezone
+from django.db.models import Q
 
 
 class Order(models.Model):
@@ -132,8 +133,6 @@ class Payment(models.Model):
 
 
 
-
-
 class Product(models.Model):
     """Many-to-one relationships"""
     name = models.CharField(max_length=255)
@@ -149,7 +148,7 @@ class Product(models.Model):
     height = models.FloatField(default=0)
     status = models.CharField(max_length=255, default='Создан')
     size = models.FloatField(default=0)
-    photo = models.CharField(max_length=255)
+    photo = models.TextField(default='')
     orders = models.ManyToManyField(Order)
     comments = models.ManyToManyField(Comment)
     def __str__(self):

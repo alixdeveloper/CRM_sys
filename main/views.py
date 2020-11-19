@@ -4,6 +4,8 @@ from django.utils.dateparse import parse_date
 from django.utils import timezone
 from .models import Order, Client, Product, Comment, Payment, ProductCategory
 import uuid, os
+from django.db.models import Q
+
 from django.http import JsonResponse
 from main.templatetags import parse_iso_order
 from django.contrib.auth.decorators import login_required
@@ -24,7 +26,6 @@ def new_comment(request,comment_type, prev, new, place, identification, label, p
     _order = get_object_or_404(Order, pk=order_id)
     comment = Comment(date=date,
                       comment_type=comment_type,
-                      prev=prev, new=new,
                       place=place, identification=identification,
                       label=label)
     comment.save()
@@ -172,6 +173,7 @@ def change_client_info(request):
 def change_product_info(request):
     last_order = request.session['last_order']
     _order = Order.objects.get(id=last_order)
+
     product = _order.product_set.get(id=request.POST['product_id'])
     product.size = request.POST['psize']
     product.category = request.POST['category']
@@ -186,6 +188,7 @@ def change_product_info(request):
     product.material = request.POST['material']
     product.name = request.POST['name']
     product.save()
+    products = _order.product_set.all()
     new_comment(request, 'product', request.POST['prev'], request.POST['new'], request.POST['place'], request.POST['identification'], request.POST['label'], product=product)
     return JsonResponse({})
 
@@ -225,18 +228,80 @@ def detele_data(request):
     if data_type == 'comment':
         comment = Comment.objects.get(id=data_id)
         comment.delete()
-        return JsonResponse({'status':'ok'})
+        return JsonResponse({'status': 'ok'})
     elif data_type == 'payment':
         payment = Payment.objects.get(id=data_id)
         payment.delete()
-        return JsonResponse({'status':'ok'})
+        return JsonResponse({'status': 'ok'})
+    elif data_type == 'photo':
+        product = Product.objects.get(id=data_id)
+        photos = json.loads(product.photo)
+        photos.remove(request.POST['photo_id'])
+        product.photo = json.dumps(photos)
+        product.save()
+        return JsonResponse({'status': 'ok'})
+
+
+def upload_photo(request):
+    last_order = request.session['last_order']
+    _order = Order.objects.get(id=last_order)
+    product = Product.objects.get(id=request.POST['data_id'])
+    if request.FILES.get('photo', False):
+        photos = request.FILES.getlist('photo')
+        photo_list = []
+        for photo in photos:
+            photo_name = str(uuid.uuid4()) + "." + photo.name.split(".")[-1]
+            photo_list.append(photo_name)
+
+            with open(f'{os.path.dirname(os.path.realpath(__file__))}/static/main/uploads/image/{photo_name}',
+                      'wb+') as destination:
+                for chunk in photo.chunks():
+                    destination.write(chunk)
+        if product.photo:
+            product.photo = json.dumps(json.loads(product.photo) + photo_list)
+        else:
+            product.photo = json.dumps(photo_list)
+        product.save()
+    return HttpResponseRedirect('/order/'+str(last_order))
 
 def change_product_status(request):
     data_id = request.POST['data_id']
     new_status = request.POST['new_status']
     product = Product.objects.get(id=data_id)
+    if new_status == 'Завершен':
+        product.complete_date = timezone.now()
+        product.save()
+        comment= Comment(date=timezone.now(),
+                comment_type=request.POST['data_id'],
+                message=f'Работа над изделием завершена. Всего дней в работе: {(product.complete_date-product.create_date).days} ({product.create_date.strftime("%d.%m.%y")} - {product.complete_date.strftime("%d.%m.%y")})'
+
+                )
+        comment.save()
+        product.comments.add(comment)
+        product.save()
+
     product.status = new_status
     product.save()
+    last_order = request.session['last_order']
+    _order = Order.objects.get(id=last_order)
+    products = _order.product_set.all()
+    all_products = _order.product_set.all()
+    close_products = 0
+    for i in all_products:
+        if i.status == 'Завершен':
+            close_products += 1
+
+    if _order.status == 'Завершен':
+        return JsonResponse({'status': 'ok'})
+    if len(products)>0 and len(all_products) == close_products:
+        _order.status = 'Завершен'
+        _order.complete_date = timezone.now()
+        _order.save()
+        comment = Comment(message=f'Заказ закрыт автоматически в связи с тем, что у всех изделий стоит статус "Завершен". Длительность заказа (дней) {(_order.complete_date-_order.create_date).days}.', date=timezone.now())
+        comment.save()
+        comment.orders.add(_order)
+
+
     return JsonResponse({'status': 'ok'})
 
 
@@ -244,8 +309,19 @@ def change_order_status(request):
     data_id = request.POST['data_id']
     new_status = request.POST['new_status']
     _order = Order.objects.get(id=data_id)
+    if _order.status == new_status:
+        return JsonResponse({'status': 'ok'})
     _order.status = new_status
     _order.save()
+
+    if _order.status == 'Завершен':
+        _order.complete_date = timezone.now()
+        _order.save()
+        comment = Comment(message=f"Заказ закрыт вручую сменой статуса. Длительность заказа (дней) {(_order.complete_date-_order.create_date).days}.", date=timezone.now())
+        comment.save()
+        comment.orders.add(_order)
+        comment.save()
+
     return JsonResponse({'status': 'ok'})
 
 
@@ -390,7 +466,7 @@ def create_product(request):
 
 def login(request):
 
-    # request.session['login'] = True
+    request.session['login'] = True
 
     username = request.GET.get('username', None)
     data = {k: str(request.GET[k]) for k in request.GET}
