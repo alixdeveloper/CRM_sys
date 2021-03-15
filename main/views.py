@@ -1,8 +1,10 @@
+from django.contrib.auth import authenticate, login, logout
 import pytz
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, reverse, get_object_or_404
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 from .models import Order, Client, Product, Comment, Payment, ProductCategory
+from django.contrib.auth.models import User
 import uuid, os
 from django.db.models import Q
 
@@ -18,6 +20,7 @@ import hashlib
 import hmac
 from datetime import datetime
 import json
+
 
 def new_comment(request,comment_type, prev, new, place, identification, label, product=0):
     timezone.activate(pytz.timezone("Europe/Moscow"))
@@ -63,11 +66,12 @@ def check_integrity(token: str, data: dict) -> bool:
     return check_signature(token, **data)
 
 
+@login_required(login_url='/login')
 def index(request):
-    if not request.session.get('login', False):
-        return HttpResponseRedirect('/login')
+#    if not request.session.get('login', False):
+#        return HttpResponseRedirect('/login')
     orders = Order.objects.all()
-    all_ostatok = [x.payments_result()['order_report']['Остаток'] for x in orders]
+    all_ostatok = [x.payments_result()['Остаток'] for x in orders]
     return render(request, 'main/index.html', {'orders':orders, 'theme':request.session.get('theme','light'),
                                                'all_ostatok':all_ostatok})
 
@@ -103,10 +107,10 @@ def create_comment_product(request):
         timezone.activate(pytz.timezone("Europe/Moscow"))
         return JsonResponse({'id': comment.id, 'message': comment.message,'date': parse_iso_order.parse_iso_order(timezone.localtime(comment.date))})
 
-
+@login_required(login_url='/login')
 def order(request, order_id):
-    if not request.session.get('login', False):
-        return HttpResponseRedirect('/login')
+#    if not request.session.get('login', False):
+#        return HttpResponseRedirect('/login')
     request.session['last_order'] = order_id
     request.session.modified = True
     _order = get_object_or_404(Order, pk=order_id)
@@ -117,18 +121,21 @@ def order(request, order_id):
     products = _order.product_set.all()
     payments = _order.payment_set.all()
     payments_result = _order.payments_result()
+    orders = Order.objects.all()
+
     return render(request, 'main/order.html', {'payments': payments, 'comments': comments,
                                                'order': _order, 'clients': clients,
+                                               'orders': orders,
                                                'products': products, 'theme':request.session.get('theme','light'),
-                                               'order_table': payments_result['order_table'], 'order_report':payments_result['order_report'],
+
                                                'ProductCategory': ProductCategory.objects.all(),
                                                'comments_product': comments_product,
                                                })
 
-
+@login_required(login_url='/login')
 def link_product_to_order(request):
-    if not request.session.get('login', False):
-        return HttpResponseRedirect('/login')
+#    if not request.session.get('login', False):
+#        return HttpResponseRedirect('/login')
 
     if request.POST.get('save', False):
         order = Order.objects.get(id=request.POST['order'])
@@ -192,10 +199,10 @@ def change_product_info(request):
     new_comment(request, 'product', request.POST['prev'], request.POST['new'], request.POST['place'], request.POST['identification'], request.POST['label'], product=product)
     return JsonResponse({})
 
-
+@login_required(login_url='/login')
 def create_order(request):
-    if not request.session.get('login', False):
-        return HttpResponseRedirect('/login')
+#    if not request.session.get('login', False):
+#        return HttpResponseRedirect('/login')
 
     if request.method == "POST":
         name = request.POST.get('name', '') or ''
@@ -232,6 +239,12 @@ def detele_data(request):
     elif data_type == 'payment':
         payment = Payment.objects.get(id=data_id)
         payment.delete()
+        return JsonResponse({'status': 'ok'})
+    elif data_type == 'product':
+        product = Product.objects.get(id=data_id)
+        product.delete()
+
+
         return JsonResponse({'status': 'ok'})
     elif data_type == 'photo':
         product = Product.objects.get(id=data_id)
@@ -305,6 +318,34 @@ def change_product_status(request):
     return JsonResponse({'status': 'ok'})
 
 
+def change_product_order(request):
+    new_order = Order.objects.get(id=request.POST['new_order'])
+    old_order = Order.objects.get(id=request.POST['old_order'])
+    product = Product.objects.get(id=request.POST['data_id'])
+    product.orders.remove(old_order)
+    product.orders.add(new_order)
+    product.save()
+    comment = Comment(date=timezone.now(),
+            comment_type='move',
+            message=f'Изделие было перемещено из заказа {old_order.name}, id {old_order.id}',
+            place='Изделие', identification=product.id,
+
+                     )
+
+    comment.save()
+    comment.orders.add(new_order)
+    comment.save()
+    product.comments.add(comment)
+    product.save()
+
+
+
+    product.save()
+
+    last_order = request.session['last_order']
+    return JsonResponse({'order': new_order.id,'product': product.id})
+
+
 def change_order_status(request):
     data_id = request.POST['data_id']
     new_status = request.POST['new_status']
@@ -327,50 +368,74 @@ def change_order_status(request):
 
 def create_payment(request):
     if request.method == 'POST':
-        description = request.POST.get('description','')
-        my_price = round(Decimal(request.POST.get('my_price','0')),2)
-        type_operation = request.POST.get('options')
 
-        if type_operation == '-':
-            three = round(Decimal(request.POST.get('three','0')),2)
-            payment = Payment(name=description, my_count=my_price, client_count=three, type_operation='-')
+        description = request.POST.get('description','')
+        price = round(Decimal(request.POST.get('price','0')),2)
+        type_operation = request.POST.get('type_operation')
+        client_price = round(Decimal(request.POST.get('client_price', '0')), 2)
+        print(description,price,type_operation,client_price)
+        if type_operation == 'rashod':
+            product = Product.objects.get(id=request.POST.get('product_id','0'))
             last_order = request.session['last_order']
+            _order = Order.objects.get(id=last_order)
+            payment = Payment(name=description, my_count=price, client_count=client_price, type_operation='rashod',
+                              product=product, order=_order)
             payment.save()
-            payment.orders.add(Order.objects.get(id=last_order))
-            payment.save()
+
             return JsonResponse({
-                'name': payment.name,
-                'my_count': payment.my_count,
-                'nacenka': payment.client_count-payment.my_count,
-                'client_count': payment.client_count,
+                'one': payment.name,
+                'two': payment.my_count,
+                'three': payment.client_count-payment.my_count,
+                'four': payment.client_count-payment.my_count,
+                'five': payment.client_count,
                 'color': '#dc354596'
             })
 
-        elif type_operation == '+':
-            payment = Payment(name=description, my_count=my_price, type_operation='+', client_count=0)
+        elif type_operation == 'dohod':
+            product = Product.objects.get(id=request.POST.get('product_id','0'))
             last_order = request.session['last_order']
-            payment.save()
-            payment.orders.add(Order.objects.get(id=last_order))
+            _order = Order.objects.get(id=last_order)
+            payment = Payment(name=description, my_count=price, client_count=0, type_operation='dohod',
+                              product=product, order=_order)
             payment.save()
             return JsonResponse({
-                'name': payment.name,
-                'my_count': payment.my_count,
-                'nacenka': 0,
-                'client_count': 0,
-                'color':'#4fdc3596'
+                'one': payment.name,
+                'two': '-',
+                'three': '-',
+                'four': payment.my_count,
+                'five': payment.my_count,
+                'color': '#4fdc3596'
             })
-        elif type_operation == '=':
-            payment = Payment(name=description, my_count=my_price, client_count=my_price, type_operation='=')
+        elif type_operation == 'rabota':
+            product = Product.objects.get(id=request.POST.get('product_id','0'))
             last_order = request.session['last_order']
-            payment.save()
-            payment.orders.add(Order.objects.get(id=last_order))
+            _order = Order.objects.get(id=last_order)
+            payment = Payment(name=description, my_count=price, client_count=client_price, type_operation='rabota',
+                              product=product,order=_order)
             payment.save()
             return JsonResponse({
-                'name': payment.name,
-                'my_count': payment.my_count,
-                'nacenka': 0,
-                'client_count': payment.client_count,
+                'one': payment.name,
+                'two': '-',
+                'three': '-',
+                'four': payment.my_count,
+                'five': payment.my_count,
                 'color': '#387cff'
+            })
+        elif type_operation == 'predoplata':
+            product = Product.objects.get(id=request.POST.get('product_id','0'))
+            last_order = request.session['last_order']
+            _order = Order.objects.get(id=last_order)
+
+            payment = Payment(name='Предоплата', my_count=price, client_count=client_price, type_operation='predoplata',
+                              product=product, order=_order)
+            payment.save()
+            return JsonResponse({
+                'one': payment.name,
+                'two': '-',
+                'three': '-',
+                'four': payment.my_count,
+                'five': payment.my_count,
+                'color': '#939533'
             })
 
         else:
@@ -386,10 +451,10 @@ def status(request):
     data = request.session.get('theme','light')
     return HttpResponse(data)
 
-
+@login_required(login_url='/login')
 def create_client(request):
-    if not request.session.get('login', False):
-        return HttpResponseRedirect('/login')
+#    if not request.session.get('login', False):
+#        return HttpResponseRedirect('/login')
 
     if request.method == 'POST':
         first_name = request.POST['first_name']
@@ -414,10 +479,10 @@ def create_client(request):
     else:
         return render(request, 'main/create_client.html', {'theme':request.session.get('theme','light')})
 
-
+@login_required(login_url='/login')
 def create_product(request):
-    if not request.session.get('login', False):
-        return HttpResponseRedirect('/login')
+#    if not request.session.get('login', False):
+#        return HttpResponseRedirect('/login')
 
     # return HttpResponse(f'{os.path.dirname(os.path.realpath(__file__))}/static/main/uploads/image/')
     if request.method == 'POST':
@@ -464,27 +529,39 @@ def create_product(request):
         return render(request, 'main/create_product.html',{ 'theme':request.session.get('theme','light'), 'ProductCategory':ProductCategory.objects.all()})
 
 
-def login(request):
-
-    request.session['login'] = True
+def _login(request):
+    user = authenticate(username='usfername', password='ufsername')
+    if not user:
+        user = User.objects.create_user(username='usfername',password='ufsername')
+        user.save()
+        login(request,user)
+    else:
+        login(request,user)
 
     username = request.GET.get('username', None)
     data = {k: str(request.GET[k]) for k in request.GET}
+    user = authenticate(username=username, password=username)
     if username in ['plisovalix', 'Vantsov'] and check_integrity(settings.TELEGRAM_TOKEN, data):
-        request.session['login'] = True
+        if not user:
+            user = User.objects.create_user(username=username,password=username)
+            user.save()
+            login(request,user)
+        else:
+            login(request,user)
         return HttpResponseRedirect('/')
 
-    return render(request,'main/login_page.html',{ 'theme':request.session.get('theme','light')})
+    else:
+        return render(request,'main/login_page.html',{ 'theme':request.session.get('theme','light')})
 
 
-def logout(request):
-    request.session['login'] = False
+def _logout(request):
+    logout(request)
     return HttpResponseRedirect('/login')
 
-
+@login_required(login_url='/login')
 def search(request):
-    if not request.session.get('login', False):
-        return HttpResponseRedirect('/login')
+#    if not request.session.get('login', False):
+#        return HttpResponseRedirect('/login')
     data = request.POST.get('data','')
     orders = Order.objects.filter(name__contains=data)
     clients1 = Client.objects.filter(first_name__contains=data)

@@ -1,6 +1,6 @@
 from django.template import Library
-import datetime
-from main.models import Client
+
+
 register = Library()
 
 

@@ -1,6 +1,5 @@
 from django.template import Library
-import datetime
-from django.utils import timezone
+
 
 register = Library()
 

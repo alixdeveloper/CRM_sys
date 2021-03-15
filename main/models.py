@@ -22,7 +22,6 @@ class Order(models.Model):
         client = self.client_set.first()
         return client
 
-
     def sum_weight_product(self):
         products = self.product_set.all()
         result = float(0)
@@ -31,63 +30,45 @@ class Order(models.Model):
                 result += product.weight
         return result
 
-
     def payments_result(self):
         payments = self.payment_set.all()
         order_table = list()
         order_report = {
             'Стоимость для клиента': Decimal(0.00),
-            'Доход':Decimal(0.00),
+            'Предоплата':Decimal(0.00),
             'Остаток':Decimal(0.00),
-            'Моя работа':Decimal(0.00),
-                        'Наценка':Decimal(0.00),
-                        'Затраты':Decimal(0.00),
-                        'Прибыль':Decimal(0.00),
-                        'Прибыль в %':0,
-                        'Прибыль в день':Decimal(0.00),
-                        'Длительность':0,
-                        'Затратыных операций':0}
-        order_report['Длительность'] = (self.complete_date - self.create_date).days
+            'Доход':Decimal(0.00),
+            'Расход':Decimal(0.00),
+            'Прибыль':Decimal(0.00),
+            'Наценка':Decimal(0.00),
+            'Прибыль в %':0,
+        }
         for payment in payments:
-            order_table.append([payment.name,
-                                round(Decimal(payment.my_count),2),
-                                round(Decimal(payment.client_count-payment.my_count)),
-                                round(Decimal(payment.client_count))])
-            if payment.type_operation != '+':
-                order_report['Наценка'] += payment.client_count-payment.my_count
-            if payment.type_operation == '=':
-                order_report['Моя работа'] += payment.my_count
-            if payment.type_operation == '+':
+            if payment.type_operation == 'predoplata':
+                order_report['Предоплата'] += payment.my_count
                 order_report['Доход'] += payment.my_count
-            else:
-                order_report['Затратыных операций'] += 1
-                order_report['Затраты'] += payment.my_count
+            elif payment.type_operation == 'rabota':
+                order_report['Доход'] += payment.my_count
+
+            elif payment.type_operation == 'dohod':
+                order_report['Стоимость для клиента'] += payment.my_count
+            elif payment.type_operation == 'rashod':
                 order_report['Стоимость для клиента'] += payment.client_count
-        if order_report['Доход'] == 0:
-            order_report['Прибыль в %'] = round(order_report['Доход'],2)
+                order_report['Доход'] += payment.client_count-payment.my_count
+                order_report['Расход'] += payment.my_count
+                order_report['Наценка'] += payment.client_count-payment.my_count
+        order_report['Остаток'] += order_report['Стоимость для клиента'] - order_report['Предоплата']
+        order_report['Прибыль'] += order_report['Доход'] - order_report['Расход']
+        if order_report['Расход']:
+            order_report['Прибыль в %'] += round(((order_report['Прибыль'] * 100) / order_report['Расход']),2)
         else:
-            order_report['Прибыль в %'] = round((order_report['Доход']-order_report['Затраты']+order_report['Моя работа'])/(order_report['Доход']/100),2)
-        if order_report['Длительность'] == 0:
-            order_report['Прибыль в день'] = round(order_report['Доход']-order_report['Затраты'],2)
-
-        else:
-            order_report['Прибыль в день'] = round((order_report['Доход']-order_report['Затраты']+order_report['Моя работа'])/order_report['Длительность'],2)
-        order_report['Прибыль'] = order_report['Доход'] - order_report['Затраты']
-        order_report['Доход'] = round(order_report['Доход'],2)
-        order_report['Затраты'] = round(order_report['Затраты'],2)
-        order_report['Прибыль'] = Decimal(round(order_report['Прибыль'],2))
-        order_report['Наценка'] = round(order_report['Наценка'],2)
-        order_report['Остаток'] = round(order_report['Стоимость для клиента']-order_report['Доход'],2)
-        order_report['Моя работа'] = Decimal(round(order_report['Моя работа'],2))
-
+            order_report['Прибыль в %'] = 0
         for k,v in order_report.items():
-            if k in ['Доход','Затраты','Прибыль','Прибыль в день', 'Стоимость для клиента','Моя работа','Наценка','Остаток']:
+            if k in ['Стоимость для клиента','Предоплата','Остаток','Доход', 'Расход','Прибыль','Наценка', 'Прибыль в день']:
                 order_report[k] =str(order_report[k])+'\xa0₽'
             if k in ['Прибыль в %']:
                 order_report[k] = str(order_report[k]) + '\xa0%'
-            if k in ['Длительность']:
-                order_report[k] = str(order_report[k]) + '\xa0дней'
-        return {'order_table': order_table, 'order_report': order_report}
+        return order_report
 
 
 class Client(models.Model):
@@ -123,15 +104,6 @@ class Comment(models.Model):
     place = models.CharField(max_length=255, default="")
     identification = models.CharField(max_length=255, default="")
 
-class Payment(models.Model):
-    name = models.CharField(max_length=255)
-    my_count = models.DecimalField(max_digits=65, decimal_places=2)
-    client_count = models.DecimalField(max_digits=65, decimal_places=2)
-    type_operation = models.CharField(max_length=25)
-    orders = models.ManyToManyField(Order)
-
-
-
 
 class Product(models.Model):
     """Many-to-one relationships"""
@@ -151,5 +123,72 @@ class Product(models.Model):
     photo = models.TextField(default='')
     orders = models.ManyToManyField(Order)
     comments = models.ManyToManyField(Comment)
+    last_notifications = models.DateTimeField('дата последнего уведомления', default=timezone.now)
+    next_notifications = models.DateTimeField('дата последнего уведомления', default=timezone.now)
+    notifications = models.BooleanField('отрпавлять уведомления?', default=True)
+
     def __str__(self):
         return f'Изделие "{self.name}" связано с {len(self.orders.all())} заказами'
+
+    def payments_result(self):
+        payments = self.payment_set.all()
+        order_table = list()
+        order_report = {
+            'Стоимость для клиента': Decimal(0.00),
+            'Предоплата':Decimal(0.00),
+            'Остаток':Decimal(0.00),
+            'Доход':Decimal(0.00),
+            'Расход':Decimal(0.00),
+            'Прибыль':Decimal(0.00),
+            'Наценка':Decimal(0.00),
+            'Прибыль в %':0,
+            'Длительность': 0,
+            'Прибыль в день':Decimal(0.00),
+        }
+        for payment in payments:
+            if payment.type_operation == 'predoplata':
+                order_report['Остаток'] -= payment.my_count
+                order_report['Предоплата'] += payment.my_count
+                order_report['Доход'] += payment.my_count
+            elif payment.type_operation == 'rabota':
+                order_report['Доход'] += payment.my_count
+                order_report['Остаток'] += payment.my_count
+
+            elif payment.type_operation == 'dohod':
+                order_report['Остаток'] -= payment.my_count
+                order_report['Стоимость для клиента'] += payment.my_count
+            elif payment.type_operation == 'rashod':
+                order_report['Остаток'] += payment.client_count
+                order_report['Стоимость для клиента'] += payment.client_count
+                order_report['Доход'] += payment.client_count-payment.my_count
+                order_report['Расход'] += payment.my_count
+                order_report['Наценка'] += payment.client_count-payment.my_count
+
+        order_report['Прибыль'] += order_report['Доход'] - order_report['Расход']
+        if order_report['Расход']:
+            order_report['Прибыль в %'] += round(((order_report['Прибыль'] * 100) / order_report['Расход']),2)
+        else:
+            order_report['Прибыль в %'] = 0
+        order_report['Длительность'] = (self.complete_date - self.create_date).days
+        if order_report['Длительность']:
+            order_report['Прибыль в день'] = round((order_report['Прибыль']/order_report['Длительность']),2)
+        else:
+            order_report['Прибыль в день'] = 0
+
+        for k,v in order_report.items():
+            if k in ['Стоимость для клиента','Предоплата','Остаток','Доход', 'Расход','Прибыль','Наценка', 'Прибыль в день']:
+                order_report[k] =str(order_report[k])+'\xa0₽'
+            if k in ['Прибыль в %']:
+                order_report[k] = str(order_report[k]) + '\xa0%'
+            if k in ['Длительность']:
+                order_report[k] = str(order_report[k]) + '\xa0дней'
+        return order_report
+
+
+class Payment(models.Model):
+    name = models.CharField(max_length=255)
+    my_count = models.DecimalField(max_digits=65, decimal_places=2)
+    client_count = models.DecimalField(max_digits=65, decimal_places=2)
+    type_operation = models.CharField(max_length=25)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True,null=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=True,null=True)
